@@ -7,7 +7,10 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
+<<<<<<< HEAD
 use Illuminate\Support\Facades\DB;
+=======
+>>>>>>> 3cae835 (Archivos Subidos)
 use GuzzleHttp\Client;
 
 class GetDataCOCController extends Controller
@@ -30,6 +33,7 @@ class GetDataCOCController extends Controller
      */
     public function store(Request $request)
     {
+<<<<<<< HEAD
         $filtros = $request->filtros;
 
         $id_cadena = 1;
@@ -101,6 +105,39 @@ class GetDataCOCController extends Controller
         $rpta['pagina']['total'] = $cadenas->total();
 
         return $rpta; //['muestras']['next_page_url'];
+=======
+        $fecha = $request->fecha;
+        $tipo_muestra = $request->tipo_muestra;
+        if (!isset($fecha)) {
+            return [];
+        }
+
+        if (isset($_GET['page'])) {
+            $page = $_GET['page'];
+        }
+        
+        $client = new \GuzzleHttp\Client(['base_uri' => 'http://onlinedata.alslatam.com/wsmylims/public/']);
+        
+        if (isset($page)) {
+            if (isset($tipo_muestra)) {
+                $response = $client->request('POST', 'muestras_coc', ['query' => ['page' => $page],'json' => ['fecha' => $fecha, 'tipo_muestra' => $tipo_muestra]]);
+            } else {
+                $response = $client->request('POST', 'muestras_coc', ['query' => ['page' => $page],'json' => ['fecha' => $fecha]]);
+            }
+        } else {
+            if (isset($tipo_muestra)) {
+                $response = $client->request('POST', 'muestras_coc', ['json' => ['fecha' => $fecha, 'tipo_muestra' => $tipo_muestra]]);
+            } else {
+                $response = $client->request('POST', 'muestras_coc', ['json' => ['fecha' => $fecha]]);
+            }
+        }
+
+        $respuesta = json_decode($response->getBody()->getContents(), true);
+        $respuesta['muestras']['next_page_url'] = str_replace('http://onlinedata.alslatam.com/wsmylims/public/muestras_coc', 'https://api-solutions.alslatam.com/api/GetDataCOC', $respuesta['muestras']['next_page_url']);
+        $respuesta['muestras']['prev_page_url'] = str_replace('http://onlinedata.alslatam.com/wsmylims/public/muestras_coc', 'https://api-solutions.alslatam.com/api/GetDataCOC', $respuesta['muestras']['prev_page_url']);
+        
+        return $respuesta;//['muestras']['next_page_url'];
+>>>>>>> 3cae835 (Archivos Subidos)
     }
 
     public function paginate($items, $perPage = 20, $page = null, $options = [])
@@ -115,6 +152,7 @@ class GetDataCOCController extends Controller
         return new LengthAwarePaginator($currentPageResults, $items->count(), $perPage, $page, $options);
     }
 
+<<<<<<< HEAD
     public function filtros($datos, $nombre_columna, $condicion, $valor)
     {
         switch ($condicion) {
@@ -168,6 +206,8 @@ class GetDataCOCController extends Controller
         return $datos;
     }
 
+=======
+>>>>>>> 3cae835 (Archivos Subidos)
     /**
      * Display the specified resource.
      *
