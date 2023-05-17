@@ -87,5 +87,6 @@ return [
   'igual_a' => 'igual a',
   'diferente_de' => 'diferente de',
   'mayor_que' => 'mayor que',
-  'menor_que' => 'menor que'
+  'menor_que' => 'menor que',
+  'alias_estacion' => 'Alias Estación'
 ];

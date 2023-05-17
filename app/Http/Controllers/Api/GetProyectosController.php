@@ -40,17 +40,20 @@ class GetProyectosController extends Controller
 
             $sql_proyectos = DB::table('muestras as m')
                         ->select(DB::raw(
-                            "case when gp.grupo_proyecto is null then CONCAT('P',p.id) else CONCAT('G',gp.id) end as id,
+                            /*"case when gp.grupo_proyecto is null then CONCAT('P',p.id) else CONCAT('G',gp.id) end as id,
                             case when gp.grupo_proyecto is null then p.nombre_proyecto else gp.grupo_proyecto end as nombre_proyecto
+                            "*/
+                            "case when p.alias_proyecto is null then p.nombre_proyecto else p.alias_proyecto end as id,
+                            case when p.alias_proyecto is null then p.nombre_proyecto else p.alias_proyecto end as nombre_proyecto
                             "
                         ))
                         ->leftjoin('proyectos AS p', 'm.id_proyecto', '=', 'p.id')
-                        ->leftjoin('proyecto_grupo_proyectos AS pgp', 'pgp.id_proyecto', '=', 'p.id')
-                        ->leftjoin('grupo_proyectos AS gp', 'gp.id', '=', 'pgp.id_grupo_proyecto')
+                        //->leftjoin('proyecto_grupo_proyectos AS pgp', 'pgp.id_proyecto', '=', 'p.id')
+                        //->leftjoin('grupo_proyectos AS gp', 'gp.id', '=', 'pgp.id_grupo_proyecto')
                         ->where('m.id_tipo_muestra', '=', $id_tipo_muestra)
                         ->whereIn('m.id_estado', [3,4])
                         ->where('m.activo', '=', 'S')
-                        ->distinct('id')->orderBy('nombre_proyecto');            
+                        ->distinct()->orderBy('nombre_proyecto');
 
             $sql_proyectos = filtroMuestrasQuery($sql_proyectos,$usuario);
             $sql_proyectos = $sql_proyectos->get();

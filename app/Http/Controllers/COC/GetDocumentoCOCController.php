@@ -7,6 +7,10 @@ use Illuminate\Http\Request;
 use App\Exports\UsersExport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\CadenaCustodiaExport;
+use Illuminate\Support\Facades\DB;
+use Dompdf\Dompdf;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Writer\Html;
 
 class GetDocumentoCOCController extends Controller
 {
@@ -17,7 +21,14 @@ class GetDocumentoCOCController extends Controller
      */
     public function index()
     {
-        //
+        $excelFile = storage_path('app/public/Book1.xlsx');
+        $pdfFile = storage_path('app/public/out.pdf');
+
+        $spreadsheet = IOFactory::load($excelFile);
+        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Pdf');
+    $writer->save($pdfFile);
+
+    return response()->download($pdfFile);
     }
 
     /**
@@ -28,17 +39,29 @@ class GetDocumentoCOCController extends Controller
      */
     public function store(Request $request)
     {
-        $datos['cliente'] = "Cerro Verde";
-        $datos['contacto'] = "Juan Perez";
-        $datos['correo'] = "juan.perez@alsglobal.com";
-        $datos['procedencia'] = "comedor";
-        $datos['proyecto'] = "proyecto NN";
-        $datos['numero_proceso'] = "1234/2021";
-        $datos['numero_os'] = "-";
-        $abcd = [1,2,3,4,5,5];
+        //Leemos Datos
+        $id_cadena = 1;
+        
+        //Terminamos de leer datos
+        $cadenas = DB::table("cadenas as c")
+            ->where('c.id', $id_cadena)
+            ->first();
+
+        $parametros_laboratorio = DB::table("cadena_laboratorio_parametros as lp")
+            ->where('lp.id_cadena', $id_cadena)
+            ->get();
+
+        $parametros_in_situ = DB::table("cadena_in_situ_parametros as ip")
+            ->where('ip.id_cadena', $id_cadena)
+            ->get();
+        
         $export = new CadenaCustodiaExport();
-        $export->setData($datos,$abcd);
-        return Excel::download($export, 'COC.xlsx');
+        $export->setData($cadenas, $parametros_laboratorio, $parametros_laboratorio);
+        
+        return $export->export();
+        //
+        //return Excel::download($export, 'COC.xlsx');
+        //return $users;
     }
 
     /**

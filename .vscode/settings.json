@@ -1,0 +1,17 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default"
+            },
+            "previewLimit": 50,
+            "server": "database-1.cuedbpnkewq9.us-east-2.rds.amazonaws.com",
+            "port": 3306,
+            "driver": "MySQL",
+            "username": "admin",
+            "database": "alsolutionslatam",
+            "name": "Solutions",
+            "askForPassword": true
+        }
+    ]
+}

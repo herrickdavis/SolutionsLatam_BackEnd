@@ -111,7 +111,7 @@ class GetDataHistoricaController extends Controller
 
             
 
-            $sql_id_estaciones_grupo = DB::table('grupo_estaciones as ge')
+            /*$sql_id_estaciones_grupo = DB::table('grupo_estaciones as ge')
                                 ->select(DB::raw(
                                     "ege.id_estacion as id
                                     "
@@ -126,9 +126,9 @@ class GetDataHistoricaController extends Controller
                                 ))
                                 ->whereIn('id', $id_estaciones)
                                 ->union($sql_id_estaciones_grupo)
-                                ->get();
+                                ->get();*/
 
-            $sql_id_estaciones = json_decode(json_encode($sql_id_estaciones), true);
+            /*$sql_id_estaciones = json_decode(json_encode($sql_id_estaciones), true);*/
             //$sql_id_estaciones = $sql_id_estaciones->toArray();
             //return $sql_id_estaciones;
             $sql_id_parametros_grupo = DB::table('grupo_parametros as gp')
@@ -167,10 +167,10 @@ class GetDataHistoricaController extends Controller
 
             //return $id_parametros;
 
-            $id_estaciones = [];
+            /*$id_estaciones = [];
             foreach ($sql_id_estaciones as $valor) {
                 $id_estaciones[] = $valor['id'];
-            }
+            }*/
 
             $resultado = [];
 
@@ -185,7 +185,15 @@ class GetDataHistoricaController extends Controller
                                 ->whereIn('m.id_estado', [3,4])
                                 ->where('m.activo', '=', 'S')
                                 ->where('m.id_tipo_muestra', '=', $id_tipo_muestra)
-                                ->whereIn('e.id', $id_estaciones)
+                                //->whereIn('e.id', $id_estaciones)
+                                /*->whereIn('e.nombre_estacion',$estaciones)
+                                ->orWhere(function ($query) use ($estaciones) {
+                                    $query->whereIn('e.alias_estacion', $estaciones);
+                                })*/
+                                ->where(function ($query) use ($estaciones) {
+                                    $query->whereIn('e.nombre_estacion', $estaciones)
+                                          ->orWhereIn('e.alias_estacion', $estaciones);
+                                })
                                 ->whereIn('mp.id_parametro', $id_param)
                                 ->orderBy('m.fecha_muestreo', 'ASC')
                                 ->first();
@@ -204,8 +212,8 @@ class GetDataHistoricaController extends Controller
                                     when gp.grupo_parametros is null then p.nombre_parametro
                                     else gp.grupo_parametros end as nombre_parametro,
                                     case
-                                    when ge.grupo_estacion is null then e.nombre_estacion
-                                    else ge.grupo_estacion end as estacion
+                                    when e.alias_estacion is null then e.nombre_estacion
+                                    else e.alias_estacion end as estacion
                                     '
                                 ))
                                 ->leftjoin('muestra_parametros as mp', 'mp.id_muestra', '=', 'm.id')
@@ -223,17 +231,24 @@ class GetDataHistoricaController extends Controller
                                 ->whereIn('m.id_estado', [3,4])
                                 ->where('m.activo', '=', 'S')
                                 ->where('m.id_tipo_muestra', '=', $id_tipo_muestra)
-                                ->whereIn('e.id', $id_estaciones)
+                                //->whereIn('e.id', $id_estaciones)
+                                ->where(function ($query) use ($estaciones) {
+                                    $query->whereIn('e.nombre_estacion', $estaciones)
+                                          ->orWhereIn('e.alias_estacion', $estaciones);
+                                })
                                 ->whereIn('mp.id_parametro', $parametro['id'])
                                 ->distinct()
                                 ->orderBy('m.fecha_muestreo', 'ASC');
                 
                 if ($id_proyecto) {
-                    foreach ($id_proyecto as $key => $value) {
+                    /*foreach ($id_proyecto as $key => $value) {
                         $id_proyecto[$key] = str_replace("P", "", $value);
-                    }
+                    }*/
 
-                    $sql_data_historica = $sql_data_historica->whereIn('m.id_proyecto', $id_proyecto);
+                    $sql_data_historica = $sql_data_historica->where(function ($query) use ($id_proyecto) {
+                        $query->whereIn('pr.nombre_proyecto', $id_proyecto)
+                              ->orWhereIn('pr.alias_proyecto', $id_proyecto);
+                    });
                 }
 
                 $sql_data_historica = $sql_data_historica->get();

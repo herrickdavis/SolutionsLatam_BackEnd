@@ -53,10 +53,15 @@ use App\Http\Controllers\Api\SetEstadoMuestrasController;
 use App\Http\Controllers\Api\GetLogsController;
 use App\Http\Controllers\Api\GetLogAccionesController;
 use App\Http\Controllers\Api\GetEmpresasPorUsuarioController;
+use App\Http\Controllers\Api\GetAllEstacionesController;
+use App\Http\Controllers\Api\SetAliasEstacionesController;
+use App\Http\Controllers\Api\GetAllProyectosController;
+use App\Http\Controllers\Api\SetAliasProyectosController;
 
 use App\Http\Controllers\COC\GetDocumentoCOCController;
 use App\Http\Controllers\COC\GetDataCOCController;
 use App\Http\Controllers\COC\GetEmpresasCOCController;
+use App\Http\Controllers\COC\SetDataCadenasController;
 
 // API CLIENTES
 use App\Http\Controllers\ApiClientes\LoginController;
@@ -109,6 +114,7 @@ Route::apiResource('GetLogAcciones', GetLogAccionesController::class);
 
 //COC
 Route::apiResource('GetClienteCOC', GetEmpresasCOCController::class);
+Route::apiResource('SetDataCadenas', SetDataCadenasController::class);
 
 //Extras
 Route::apiResource('UpdateEmpresaMuestra', UpdateEmpresaMuestraController::class);
@@ -142,9 +148,15 @@ Route::middleware('auth:sanctum')->apiResource('SetUsuario', SetUsuarioControlle
 Route::middleware('auth:sanctum')->apiResource('GetColumnas', GetColumnasController::class);
 Route::middleware('auth:sanctum')->apiResource('GetUsuarios', GetUsuariosController::class);
 Route::middleware('auth:sanctum')->apiResource('GetProyectos', GetProyectosController::class);
-Route::middleware('auth:sanctum')->apiResource('GetDocumentoCOC', GetDocumentoCOCController::class);
-Route::middleware('auth:sanctum')->apiResource('GetDataCOC', GetDataCOCController::class);
+
+Route::apiResource('GetDocumentoCOC', GetDocumentoCOCController::class);
+Route::apiResource('GetDataCOC', GetDataCOCController::class);
+
 Route::middleware('auth:sanctum')->apiResource('GetEmpresasPorUsuario', GetEmpresasPorUsuarioController::class);
+Route::middleware('auth:sanctum')->apiResource('GetAllEstaciones', GetAllEstacionesController::class);
+Route::middleware('auth:sanctum')->apiResource('SetAliasEstaciones', SetAliasEstacionesController::class);
+Route::middleware('auth:sanctum')->apiResource('GetAllProyectos', GetAllProyectosController::class);
+Route::middleware('auth:sanctum')->apiResource('SetAliasProyectos', SetAliasProyectosController::class);
 
 //EDD
 Route::middleware('auth:sanctum')->apiResource('SetEstructuraEdd', SetEstructuraEddController::class);

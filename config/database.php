@@ -3,6 +3,8 @@
 use Illuminate\Support\Str;
 
 return [
+    'log_queries' => true,
+    'logging' => true,
 
     /*
     |--------------------------------------------------------------------------
