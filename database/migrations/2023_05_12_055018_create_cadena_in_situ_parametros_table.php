@@ -14,20 +14,8 @@ class CreateCadenaInSituParametrosTable extends Migration
     public function up()
     {
         Schema::create('cadena_in_situ_parametros', function (Blueprint $table) {
+            $table->id();
             $table->foreignId('id_cadena');
-            $table->string('estacion',100);
-            $table->string('fecha_inicio',100);
-            $table->string('hora_inicio',100);
-            $table->string('fecha_fin',100);
-            $table->string('hora_fin',100);
-            $table->string('codigo_laboratorio',100);
-            $table->string('matriz',100);
-            $table->string('coordenada_sur',100);
-            $table->string('coordenada_oeste',100);
-            $table->string('zona',100);
-            $table->string('altura',100);
-            $table->string('cantidad_frascos',100);
-            $table->string('observaciones',100);
             $table->string('parametro',100);
             $table->string('valor',100);
             $table->string('unidad',50);

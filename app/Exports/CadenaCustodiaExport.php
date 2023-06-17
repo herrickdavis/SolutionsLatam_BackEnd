@@ -35,30 +35,113 @@ class CadenaCustodiaExport
     public function export(): StreamedResponse
     {
         // Carga el archivo de Excel existente
-        $spreadsheet = IOFactory::load(storage_path('app/public/Book1.xlsx'));
-
+        \Log::info("dasdsr aqui"."\n");
+        $spreadsheet = IOFactory::load(storage_path('app/public/Book3.xlsx'));
+        \Log::info("Pasr aqui"."\n");
         // Obtiene la primera hoja en el archivo (ajusta esto si necesitas trabajar con múltiples hojas)
         $worksheet = $spreadsheet->getActiveSheet();
 
         $highestRow = $worksheet->getHighestDataRow();
         $highestColumn = $worksheet->getHighestDataColumn();
         
-        $info = array_change_key_case((array) $this->info,  CASE_UPPER);
-
+        $info = $this->info;
+        $parametros_laboratorio = $this->parametros_laboratorio;
+        $parametros_in_situ = $this->parametros_in_situ;
         // Itera sobre las celdas y realiza las modificaciones
+        //\Log::info($highestColumn."\n");
+        $contador_laboratorio = 0;
+        $contador_in_situ = 0;
+        $contador_muestras = 0;
+        $inicio_parametros_laboratorio = 0;
+        $inicio_parametros_in_situ = 0;
+        //Recorro en busca de metodos de laboratorio y relleno
+        //dd($info[1]);
+        //\Log::info("POr aqui"."\n");
+        //\Log::info($highestRow."\n");
+        //\Log::info($this->column_to_number($highestColumn)."\n");
         for ($row = 1; $row <= $highestRow; $row++) {
             $col = 'A';
-            while ($col <= $highestColumn) {
+            while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
                 $cellValue = $worksheet->getCell($col . $row)->getValue();
 
+                if ($cellValue  == "[METODO_LABORATORIO]" & count($parametros_laboratorio) > $contador_laboratorio) {
+                    if($inicio_parametros_laboratorio == 0){
+                        $inicio_parametros_laboratorio = $this->column_to_number($col);
+                    }
+                    //\Log::info($parametros_laboratorio[$contador_laboratorio]->parametro."\n");
+                    $worksheet->setCellValue($col . $row, $parametros_laboratorio[$contador_laboratorio]);
+                    $contador_laboratorio++;
+                }
+                $col = $this->sumarLetra($col);
+            }
+        }
+        //\Log::info("ahora aqui"."\n");
+        $contador_laboratorio = 0;
+        //Recorro en busca de parametros in situ y relleno
+        for ($row = 1; $row <= $highestRow; $row++) {
+            $col = 'A';
+            while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
+                $cellValue = $worksheet->getCell($col . $row)->getValue();
+
+                if ($cellValue  == "[PARAMETROS_IN_SITU]" & count($parametros_in_situ) > $contador_in_situ) {
+                    if($inicio_parametros_in_situ == 0){
+                        $inicio_parametros_in_situ = $this->column_to_number($col);
+                    }
+                    //\Log::info($parametros_laboratorio[$contador_laboratorio]->parametro."\n");
+                    $worksheet->setCellValue($col . $row, $parametros_in_situ[$contador_in_situ]);
+                    $contador_in_situ++;
+                }
+                $col = $this->sumarLetra($col);
+            }
+        }
+        $contador_veces = 0;
+        for ($row = 1; $row <= $highestRow; $row++) {
+            $col = 'A';
+            if($worksheet->getCell("A". $row)->getValue() == "[ESTACION]") {
+                $contador_veces++;
+                if($contador_veces == 1 || $contador_veces == 0) {
+                    $contador_muestras = 0;    
+                } else {
+                    $contador_muestras = $contador_veces - 1;
+                }
+            }
+            $contador_laboratorio = 0;
+            while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
+                $cellValue = $worksheet->getCell($col . $row)->getValue();
+                
                 //Busco y reeemplazo
                 $texto = str_replace("[","",$cellValue);
                 $texto = str_replace("]","",$texto);
-
-                if (array_key_exists($texto, $info)) {
-                    $worksheet->setCellValue($col . $row, $info[$texto]);
-                } elseif ($cellValue  == "[]") {
-
+                //\Log::info($texto."\n");
+                if(count($info) > $contador_muestras) {
+                    if (array_key_exists($texto, $info[$contador_muestras])) {
+                        $patron = '/^\[.*\]$/';
+                        if(preg_match($patron,$cellValue)) {
+                            $worksheet->setCellValue($col . $row, $info[$contador_muestras][$texto]);
+                        }
+                    } elseif ($cellValue == "[EXISTE_METODO]" & count($parametros_laboratorio) > $contador_laboratorio) {
+                        //dd($parametros_laboratorio[$contador_laboratorio]);
+                        //\Log::info($contador_muestras."Estacin \n");
+                        \Log::info($contador_muestras."\n");
+                        if(count($info[$contador_muestras]["METODOS_LABORATORIO"]) > 0) {
+                            if($info[$contador_muestras]["METODOS_LABORATORIO"][0] == $parametros_laboratorio[$contador_laboratorio]) {
+                                $worksheet->setCellValue($col . $row, "X");
+                                unset($info[$contador_muestras]["METODOS_LABORATORIO"][0]);
+                                $info[$contador_muestras]["METODOS_LABORATORIO"] = array_values($info[$contador_muestras]["METODOS_LABORATORIO"]);
+                            } else {
+                                $worksheet->setCellValue($col . $row, "");
+                            }
+                        } else {
+                            $worksheet->setCellValue($col . $row, "");
+                        }
+                        $contador_laboratorio++;
+                    } else {
+                        //aca si tiene el formato [texto] lo reemplazo por vacio
+                        $patron = '/^\[.*\]$/';
+                        if (preg_match($patron,$cellValue)) {
+                            $worksheet->setCellValue($col . $row, "");
+                        }
+                    }
                 } else {
                     //aca si tiene el formato [texto] lo reemplazo por vacio
                     $patron = '/^\[.*\]$/';
@@ -67,7 +150,9 @@ class CadenaCustodiaExport
                     }
                 }
                 $col = $this->sumarLetra($col);
+                //\Log::info($col." : ".$texto."\n");
             }
+            
         }
 
         // Prepara la respuesta de transmisión
@@ -105,6 +190,19 @@ class CadenaCustodiaExport
         }
     
         return $nuevaLetra;
+    }
+
+    private function column_to_number($column) {
+        $column = strtoupper($column);
+        $count = strlen($column);
+        $number = 0;
+        
+        for ($i = 0; $i < $count; $i++) {
+            $number *= 26;
+            $number += ord($column[$i]) - ord('A') + 1;
+        }
+        
+        return $number;
     }
 
     

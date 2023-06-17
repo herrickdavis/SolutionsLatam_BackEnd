@@ -14,16 +14,29 @@ class CreateCadenasTable extends Migration
     public function up()
     {
         Schema::create('cadenas', function (Blueprint $table) {
-            $table->id();
+            $table->id();            
             $table->string('cliente',100);
             $table->string('contacto',100);
             $table->string('correo',100);
             $table->string('lugar_procedencia',100);
             $table->string('proyecto',100);
             $table->string('periodico',100);
+            $table->string('estacion',100);
+            $table->string('fecha_inicio',100);
+            $table->string('hora_inicio',100);
+            $table->string('fecha_fin',100);
+            $table->string('hora_fin',100);
+            $table->unsignedInteger('codigo_laboratorio');
+            $table->string('tipo_muestra',100);
+            $table->string('coordenada_norte',100);
+            $table->string('coordenada_este',100);
+            $table->string('zona',100);
+            $table->string('altura',100);
+            $table->string('cantidad_frascos',100);
+            $table->string('observaciones',100);
             $table->string('numero_grupo',100);
             $table->string('numero_proceso',100);
-            $table->string('numero_orden',100);
+            $table->string('numero_orden_servicio',100);
             $table->string('plan_muestreo',100);
             $table->string('equipos_empleados',100);
             $table->string('firma_responsable_muestreo',100);

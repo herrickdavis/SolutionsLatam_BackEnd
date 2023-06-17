@@ -38,17 +38,17 @@ class SetDataCadenasController extends Controller
             $periodico = $request->periodico;
             $numero_grupo = $request->numero_grupo;
             $numero_proceso = $request->numero_proceso;
-            $numero_orden = $request->numero_orden;
+            $numero_orden_servicio = $request->numero_orden_servicio;
             $plan_muestreo = $request->plan_muestreo;
             $estacion = $request->estacion;
             $fecha_inicio = $request->fecha_inicio;
             $hora_inicio = $request->hora_inicio;
             $fecha_fin = $request->fecha_fin;
             $hora_fin = $request->hora_fin;
-            $codigo_laboratorio = $request->codigo_laboratorio;
-            $matriz = $request->matriz;
-            $coordenada_sur = $request->coordenada_sur;
-            $coordenada_oeste = $request->coordenada_oeste;
+            $codigo_laboratorio = $request->id_muestra;
+            $tipo_muestra = $request->tipo_muestra;
+            $coordenada_norte = $request->coordenada_norte;
+            $coordenada_este = $request->coordenada_este;
             $zona = $request->zona;
             $altura = $request->altura;
             $cantidad_frascos = $request->cantidad_frascos;
@@ -78,7 +78,7 @@ class SetDataCadenasController extends Controller
             $cadena->periodico = $periodico;
             $cadena->numero_grupo = $numero_grupo;
             $cadena->numero_proceso = $numero_proceso;
-            $cadena->numero_orden = $numero_orden;
+            $cadena->numero_orden_servicio = $numero_orden_servicio;
             $cadena->plan_muestreo = $plan_muestreo;
             $cadena->estacion = $estacion;
             $cadena->fecha_inicio = $fecha_inicio;
@@ -86,9 +86,9 @@ class SetDataCadenasController extends Controller
             $cadena->fecha_fin = $fecha_fin;
             $cadena->hora_fin = $hora_fin;
             $cadena->codigo_laboratorio = $codigo_laboratorio;
-            $cadena->matriz = $matriz;
-            $cadena->coordenada_sur = $coordenada_sur;
-            $cadena->coordenada_oeste = $coordenada_oeste;
+            $cadena->tipo_muestra = $tipo_muestra;
+            $cadena->coordenada_norte = $coordenada_norte;
+            $cadena->coordenada_este = $coordenada_este;
             $cadena->zona = $zona;
             $cadena->altura = $altura;
             $cadena->cantidad_frascos = $cantidad_frascos;
@@ -112,8 +112,6 @@ class SetDataCadenasController extends Controller
                 $nuevoParametro = new CadenaLaboratorioParametros;
                 $nuevoParametro->id_cadena = $cadenaId;
                 $nuevoParametro->parametro = $parametro_laboratorio['parametro'];
-                $nuevoParametro->valor = $parametro_laboratorio['valor'];
-                $nuevoParametro->unidad = $parametro_laboratorio['unidad'];
                 $nuevoParametro->save();
             }
 

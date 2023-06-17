@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateCadenaLaboratorioParametrosTable extends Migration
+class CreateCadenaPlantillasTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,13 +13,13 @@ class CreateCadenaLaboratorioParametrosTable extends Migration
      */
     public function up()
     {
-        Schema::create('cadena_laboratorio_parametros', function (Blueprint $table) {
+        Schema::create('cadena_plantillas', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('id_cadena');
-            $table->string('parametro',100);
+            $table->string('nombre_plantilla',200);
+            $table->binary('plantilla');
+            $table->string('extension',5);
+            $table->enum('activo', ['S', 'N']);
             $table->timestamps();
-            $table->index('id_cadena');
-            $table->foreign('id_cadena')->references('id')->on('cadenas');
         });
     }
 
@@ -30,6 +30,6 @@ class CreateCadenaLaboratorioParametrosTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('cadena_laboratorio_parametros');
+        Schema::dropIfExists('cadena_plantillas');
     }
 }

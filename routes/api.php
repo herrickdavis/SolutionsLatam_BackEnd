@@ -62,6 +62,9 @@ use App\Http\Controllers\COC\GetDocumentoCOCController;
 use App\Http\Controllers\COC\GetDataCOCController;
 use App\Http\Controllers\COC\GetEmpresasCOCController;
 use App\Http\Controllers\COC\SetDataCadenasController;
+use App\Http\Controllers\COC\SetCadenaPlantillaController;
+use App\Http\Controllers\COC\GetCadenaPlantillasController;
+use App\Http\Controllers\COC\GetArchivoPlantillaController;
 
 // API CLIENTES
 use App\Http\Controllers\ApiClientes\LoginController;
@@ -115,6 +118,9 @@ Route::apiResource('GetLogAcciones', GetLogAccionesController::class);
 //COC
 Route::apiResource('GetClienteCOC', GetEmpresasCOCController::class);
 Route::apiResource('SetDataCadenas', SetDataCadenasController::class);
+Route::apiResource('SetCadenaPlantilla', SetCadenaPlantillaController::class);
+Route::apiResource('GetCadenaPlantillas', GetCadenaPlantillasController::class);
+Route::apiResource('GetArchivoPlantilla', GetArchivoPlantillaController::class);
 
 //Extras
 Route::apiResource('UpdateEmpresaMuestra', UpdateEmpresaMuestraController::class);

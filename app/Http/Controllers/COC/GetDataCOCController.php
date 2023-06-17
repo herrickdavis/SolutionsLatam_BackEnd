@@ -63,9 +63,12 @@ class GetDataCOCController extends Controller
         foreach ($cadenas as $cadena) {
             $pre_resultado = [];
             $render = [];
-            $pre_resultado['data'][] = "" . $cadena->estacion;
+            $pre_resultado['data'][] = "" . $cadena->codigo_laboratorio;
+            $pre_resultado['data'][] = $cadena->numero_grupo;
+            $pre_resultado['data'][] = $cadena->numero_proceso;
+            $pre_resultado['data'][] = $cadena->estacion;
             $pre_resultado['data'][] = $cadena->fecha_inicio;
-            $pre_resultado['data'][] = $cadena->matriz;
+            $pre_resultado['data'][] = $cadena->tipo_muestra;
             $pre_resultado['render']['color'] = null;
             $pre_resultado['render']['flag'] = false;
             $pre_resultado['render']['con_documentos'] = false;
@@ -74,11 +77,14 @@ class GetDataCOCController extends Controller
             array_push($resultado, $pre_resultado);
         }
         $rpta['cabecera'] = $cabecera = [
+            trans('texto.codigo_muestra'),
+            trans('texto.numero_grupo'),
+            trans('texto.Numero_Proceso'),
             trans('texto.Estacion'),
             trans('texto.Fecha_Muestreo'),
-            trans('texto.Matriz'),
+            trans('texto.Tipo_Muestra'),
         ];
-        $rpta['format'] = ['', '', ''];
+        $rpta['format'] = ['', '', '', '', '', ''];
 
         $rpta['pagina']['current_page'] = $cadenas->currentPage();
         $rpta['pagina']['data'] = $resultado;
