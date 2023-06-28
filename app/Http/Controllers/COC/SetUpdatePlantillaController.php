@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\CadenaPlantillas;
 use Throwable;
 
-class SetCadenaPlantillaController extends Controller
+class SetUpdatePlantillaController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -27,27 +27,23 @@ class SetCadenaPlantillaController extends Controller
      */
     public function store(Request $request)
     {
-        \Log::info('Este es un mensaje de log.');
-
         try {
-            $request->validate([
-                'plantilla' => 'required|file',
-            ]);
-        
-            $file = $request->file('plantilla');
-            $fileName = $request->nombre_plantilla;
-            $fileContent = file_get_contents($file);
-            $extension = $file->getClientOriginalExtension();
-        
-            $plantilla = new CadenaPlantillas;
-            $plantilla->nombre_plantilla = $fileName;
-            $plantilla->plantilla = $fileContent;
-            $plantilla->extension = $extension;
-            $plantilla->save();
-        
-            $rpta["estado"] = "OK";
-            $rpta["mensaje"] = "Insercion Correcta del archivo: ".$fileName;
+            $cadena_plantilla = CadenaPlantillas::find($request->id);
+            $cadena_plantilla->nombre_plantilla = $request->nombre_plantilla;
+            if ($request->hasFile('plantilla')) {
+                // Se envió un archivo al request
+                $file = $request->file('plantilla');
+                $fileName = $request->nombre_plantilla;
+                $fileContent = file_get_contents($file);
+                $extension = $file->getClientOriginalExtension();
+                $cadena_plantilla->nombre_plantilla = $fileName;
+                $cadena_plantilla->plantilla = $fileContent;
+                $cadena_plantilla->extension = $extension;
+            }
+            $cadena_plantilla->save();
 
+            $rpta["estado"] = "OK";
+            $rpta["mensaje"] = "Se actualizo correctamente";
         } catch (Throwable $e) {
             report($e);
             $rpta["estado"] = "ERROR";
