@@ -74,7 +74,7 @@ use App\Http\Controllers\ApiClientes\MuestrasController;
 // Extras
 use App\Http\Controllers\Extras\UpdateEmpresaMuestraController;
 //EDD
-use App\Http\Controllers\Api\SetEstructuraEddController;
+use App\Http\Controllers\Api\SetEddController;
 use App\Http\Controllers\Api\GetEddController;
 
 /*
@@ -167,8 +167,8 @@ Route::middleware('auth:sanctum')->apiResource('GetAllProyectos', GetAllProyecto
 Route::middleware('auth:sanctum')->apiResource('SetAliasProyectos', SetAliasProyectosController::class);
 
 //EDD
-Route::middleware('auth:sanctum')->apiResource('SetEstructuraEdd', SetEstructuraEddController::class);
-Route::middleware('auth:sanctum')->apiResource('GetEdds', GetEddController::class);
+Route::apiResource('SetEdd', SetEddController::class);
+Route::apiResource('GetEdd', GetEddController::class);
 
 
 //Route::middleware('auth:sanctum')->apiResource('GetCambiarPassword', GetCambiarPasswordController::class);

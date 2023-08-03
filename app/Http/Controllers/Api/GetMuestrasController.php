@@ -9,6 +9,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\ClickBotones;
+use Illuminate\Support\Facades\Cache;
 
 class GetMuestrasController extends Controller
 {    
@@ -61,49 +62,23 @@ class GetMuestrasController extends Controller
                 trans('texto.Fecha_Muestreo')
             ];
         }
-        
-        $sql_id_empresas = DB::table('usuario_empresas as ue')
-                        ->where('id_usuario', $usuario->id)->where('ue.activo','S')->get();
-        
-        $muestras = DB::table('muestras AS m')
-                ->select(DB::raw(
-                    "m.id_parecer AS parecer,
-                    m.con_data AS con_data,
-                    m.id AS codigo_muestra,
-                    m.numero_muestra AS numero_muestra,
-                    CONCAT(gm.numero_grupo,'/',gm.anho_grupo) AS numero_grupo,
-                    p.nombre_proyecto AS proyecto,
-                    e.nombre_estacion AS estacion,
-                    m.id_estado AS estado,
-                    ta.nombre_tipo_muestra as tipo_muestra,
-                    econ.nombre_empresa AS contratante,  
-                    esol.nombre_empresa AS solicitante,
-                    m.con_documentos AS con_documentos,
-                    m.id_certificado AS id_certificado,
-                    DATE_FORMAT(m.fecha_muestreo,'%d/%m/%Y %H:%i') AS fecha_muestreo"
-                ))
-                /*->leftjoin(
-                    DB::raw(
-                        '(SELECT id_muestra, MIN(id_grupo_muestra) id_grupo_muestra FROM muestra_grupo_muestras GROUP BY id_muestra) AS `mgm`'
-                    ),
-                    function ($join) {
-                        $join->on('mgm.id_muestra', '=', 'm.id');
-                    }
-                )*/
-                ->leftjoin('muestra_grupo_muestras AS mgm', 'mgm.id_muestra', '=', 'm.id')
-                ->leftjoin('grupo_muestras AS gm', 'gm.id', '=', 'mgm.id_grupo_muestra')
-                ->leftjoin('proyectos AS p', 'p.id', '=', 'm.id_proyecto')
-                ->leftjoin('estaciones AS e', 'e.id', '=', 'm.id_estacion')
-                ->leftjoin('tipo_muestras AS ta', 'ta.id', '=', 'm.id_tipo_muestra')
-                ->leftjoin('empresas AS econ', 'econ.id', '=', 'm.id_empresa_con')
-                ->leftjoin('empresas AS esol', 'esol.id', '=', 'm.id_empresa_sol')
-                ->where('m.activo', '=', 'S')
-                ->where('ta.activo', '=', 'S')
-                ->orderBy('m.fecha_muestreo', 'DESC');
-        
-        $muestra = filtroMuestrasQuery($muestras,$usuario);
-        
-        if ($filtros != null) {
+
+        if ($numero_fila == null) {
+            $numero_fila = 20;
+        }
+
+        if ($filtros == null) {
+            $id_empresas = getIdEmpresas($usuario);
+            $cacheKey = 'muestras'.$usuario->ver_empresa_sol.'_'.$usuario->ver_contacto_sol.'_'.$usuario->ver_empresa_con.'_'.$usuario->ver_contacto_con.'_'.implode("_",$id_empresas);
+            $muestras = Cache::remember($cacheKey, 60, function() use ($usuario) {
+                $muestras = $this->queryMuestras($usuario);
+                return $muestras->get();
+            });
+
+            $muestras = $this->paginate($muestras,$numero_fila);        
+        } else {
+            //dd($filtros);
+            $muestras = $this->queryMuestras($usuario);
             foreach ($filtros as $filtro) {                
                 $pre_cabecera = $filtro['cabecera'];
                 $condicion = $filtro['condicion'];
@@ -193,12 +168,8 @@ class GetMuestrasController extends Controller
                         break;
                 }
             }
+            $muestras = $muestras->paginate($numero_fila);
         }
-        
-        if ($numero_fila == null) {
-            $numero_fila = 20;
-        }
-        $muestras = $muestras->paginate($numero_fila);
         
         $resultado = [];
         foreach ($muestras as $muestra) {
@@ -430,5 +401,46 @@ class GetMuestrasController extends Controller
         }
         
         return $datos;
+    }
+
+    public function queryMuestras($usuario){
+        $muestras = DB::table('muestras AS m')
+                        ->select(DB::raw(
+                            "m.id_parecer AS parecer,
+                            m.con_data AS con_data,
+                            m.id AS codigo_muestra,
+                            m.numero_muestra AS numero_muestra,
+                            CONCAT(gm.numero_grupo,'/',gm.anho_grupo) AS numero_grupo,
+                            p.nombre_proyecto AS proyecto,
+                            e.nombre_estacion AS estacion,
+                            m.id_estado AS estado,
+                            ta.nombre_tipo_muestra as tipo_muestra,
+                            econ.nombre_empresa AS contratante,  
+                            esol.nombre_empresa AS solicitante,
+                            m.con_documentos AS con_documentos,
+                            m.id_certificado AS id_certificado,
+                            DATE_FORMAT(m.fecha_muestreo,'%d/%m/%Y %H:%i') AS fecha_muestreo"
+                        ))
+                        /*->leftjoin(
+                            DB::raw(
+                                '(SELECT id_muestra, MIN(id_grupo_muestra) id_grupo_muestra FROM muestra_grupo_muestras GROUP BY id_muestra) AS `mgm`'
+                            ),
+                            function ($join) {
+                                $join->on('mgm.id_muestra', '=', 'm.id');
+                            }
+                        )*/
+                        ->leftjoin('muestra_grupo_muestras AS mgm', 'mgm.id_muestra', '=', 'm.id')
+                        ->leftjoin('grupo_muestras AS gm', 'gm.id', '=', 'mgm.id_grupo_muestra')
+                        ->leftjoin('proyectos AS p', 'p.id', '=', 'm.id_proyecto')
+                        ->leftjoin('estaciones AS e', 'e.id', '=', 'm.id_estacion')
+                        ->leftjoin('tipo_muestras AS ta', 'ta.id', '=', 'm.id_tipo_muestra')
+                        ->leftjoin('empresas AS econ', 'econ.id', '=', 'm.id_empresa_con')
+                        ->leftjoin('empresas AS esol', 'esol.id', '=', 'm.id_empresa_sol')
+                        ->where('m.activo', '=', 'S')
+                        ->where('ta.activo', '=', 'S')
+                        ->orderBy('m.fecha_muestreo', 'DESC');
+                
+        $muestras = filtroMuestrasQuery($muestras,$usuario);
+        return $muestras;
     }
 }

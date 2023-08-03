@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\LogLogins;
+use Illuminate\Support\Facades\Cache;
 
 class GetLoginController extends Controller
 {
@@ -56,21 +57,27 @@ class GetLoginController extends Controller
                 array_push($this->idauxempresas, $request->user()->id_empresa);
             }            
             //grupo 999 and out grupo 998
-            //Corregir en GetTipoMuestra
-            $sql_matrices = DB::table('muestras AS m')
-                ->select(DB::raw(
-                    "CAST(CASE 
-                    WHEN gm.nombre_grupo_matriz is null then CONCAT('998',mx.id) else CONCAT('999',gm.id) end AS UNSIGNED) as id,
-                    CASE
-                    WHEN gm.nombre_grupo_matriz is null then mx.nombre_matriz else gm.nombre_grupo_matriz end as nombre_matriz"
-                ))
-                ->leftjoin('matrices AS mx', 'mx.id', '=', 'm.id_matriz')
-                ->leftjoin('matriz_grupo_matrices AS mgm', 'mgm.id_matriz', '=', 'm.id_matriz')
-                ->leftjoin('grupo_matrices AS gm', 'gm.id', '=', 'mgm.id_grupo_matriz')
-                ->orderBy('mx.nombre_matriz', 'ASC')->distinct();
+            $id_empresas = getIdEmpresas($user);
+            $cacheKey = 'matrices'.$user->ver_empresa_sol.'_'.$user->ver_contacto_sol.'_'.$user->ver_empresa_con.'_'.$user->ver_contacto_con.'_'.implode("_",$id_empresas);
+
+            $sql_matrices = Cache::get($cacheKey);
             
-            $sql_matrices = filtroMuestrasQuery($sql_matrices,$user);
-            $sql_matrices = $sql_matrices->get();
+            if (!$sql_matrices) {
+                $query = DB::table('muestras AS m')
+                    ->select(DB::raw(
+                        "CAST(CASE 
+                        WHEN gm.nombre_grupo_matriz is null then CONCAT('998',mx.id) else CONCAT('999',gm.id) end AS UNSIGNED) as id,
+                        CASE
+                        WHEN gm.nombre_grupo_matriz is null then mx.nombre_matriz else gm.nombre_grupo_matriz end as nombre_matriz"
+                    ))
+                    ->leftjoin('matrices AS mx', 'mx.id', '=', 'm.id_matriz')
+                    ->leftjoin('matriz_grupo_matrices AS mgm', 'mgm.id_matriz', '=', 'm.id_matriz')
+                    ->leftjoin('grupo_matrices AS gm', 'gm.id', '=', 'mgm.id_grupo_matriz')
+                    ->orderBy('mx.nombre_matriz', 'ASC')->distinct();
+                $query = filtroMuestrasQuery($query,$user);
+                $sql_matrices = $query->get();
+                Cache::put($cacheKey, $sql_matrices, 21600);
+            }
 
             $usuario['menu'] = $sql_matrices;
 

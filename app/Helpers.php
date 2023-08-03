@@ -3,18 +3,7 @@ use Illuminate\Support\Facades\DB;
 
 function filtroMuestrasQuery($query,$user) {
 
-    $sql_id_empresas = DB::table('usuario_empresas as ue')
-                        ->where('id_usuario', $user->id)
-                        ->where('activo','S')->get();
-    $id_empresas = [];
-    foreach ($sql_id_empresas as $valor) {
-        array_push($id_empresas, $valor->id_empresa);
-    }
-
-    if (count($id_empresas) == 0 or $user->id_rol < 4) {
-        $id_empresas = [];
-        array_push($id_empresas, $user->id_empresa);
-    }
+    $id_empresas = getIdEmpresas($user);
 
     $ver_empresa_sol = $user->ver_empresa_sol;
     $ver_contacto_sol = $user->ver_contacto_sol;
@@ -37,5 +26,22 @@ function filtroMuestrasQuery($query,$user) {
     }
 
     return $query;
+}
+
+function getIdEmpresas($user) {
+    $sql_id_empresas = DB::table('usuario_empresas as ue')
+                        ->where('id_usuario', $user->id)
+                        ->where('activo','S')->get();
+    $id_empresas = [];
+    foreach ($sql_id_empresas as $valor) {
+        array_push($id_empresas, $valor->id_empresa);
+    }
+
+    if (count($id_empresas) == 0 or $user->id_rol < 4) {
+        $id_empresas = [];
+        array_push($id_empresas, $user->id_empresa);
+    }
+
+    return $id_empresas;
 }
 ?>

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use GuzzleHttp;
+use App\Models\Edd;
 
 class GetEddController extends Controller
 {
@@ -26,21 +26,8 @@ class GetEddController extends Controller
      */
     public function store(Request $request)
     {
-        $id = $request->id;
-        $muestra = $request->muestra;
-        $grupo = $request->grupo;
-        $proceso = $request->proceso;
-        $year = $request->year;
-        $tipo_fecha = $request->tipo_fecha;
-        $fecha_inicio = $request->fecha_inicio;
-        $fecha_fin = $request->fecha_fin;
-
-        
-        /*$client = new GuzzleHttp\Client();
-        $res = $client->request('POST', $url, [
-            'json' => $query_json, 'headers' => ['Authorization' => 'Bearer '.$token]
-        ]);*/
-        return $grupo;
+        $edd = Edd::all();
+        return $edd;
     }
 
     /**
