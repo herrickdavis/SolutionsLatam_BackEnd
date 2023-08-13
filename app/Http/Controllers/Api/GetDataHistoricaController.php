@@ -41,7 +41,7 @@ class GetDataHistoricaController extends Controller
             $fecha_inicio = "2019-01-01";//$request->fecha_inicio;
             $fecha_fin = $hoy->format('Y-m-d');//$request->fecha_fin;
             $id_tipo_muestra = str_replace("TA", "", $request->id_tipo_muestra);
-            $id_proyecto = str_replace("P", "", $request->id_proyecto);
+            $id_proyecto = $request->id_proyecto;
             $estaciones = $request->estaciones;
             $parametros = $request->parametros;
             $id_limite = $request->id_limite;
@@ -216,6 +216,7 @@ class GetDataHistoricaController extends Controller
                                     else e.alias_estacion end as estacion
                                     '
                                 ))
+                                ->leftJoin('proyectos as pr','pr.id','=','m.id_proyecto')
                                 ->leftjoin('muestra_parametros as mp', 'mp.id_muestra', '=', 'm.id')
                                 ->leftjoin('metodos as me', 'me.id', '=', 'mp.id_metodo')
                                 ->leftjoin('parametros as p', 'p.id', '=', 'mp.id_parametro')
@@ -241,9 +242,9 @@ class GetDataHistoricaController extends Controller
                                 ->orderBy('m.fecha_muestreo', 'ASC');
                 
                 if ($id_proyecto) {
-                    /*foreach ($id_proyecto as $key => $value) {
-                        $id_proyecto[$key] = str_replace("P", "", $value);
-                    }*/
+                    foreach ($id_proyecto as $key => $value) {
+                        $id_proyecto[$key] = $value;
+                    }
 
                     $sql_data_historica = $sql_data_historica->where(function ($query) use ($id_proyecto) {
                         $query->whereIn('pr.nombre_proyecto', $id_proyecto)
