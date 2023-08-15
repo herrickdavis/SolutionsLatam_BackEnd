@@ -66,6 +66,7 @@ use App\Http\Controllers\COC\SetCadenaPlantillaController;
 use App\Http\Controllers\COC\SetUpdatePlantillaController;
 use App\Http\Controllers\COC\GetCadenaPlantillasController;
 use App\Http\Controllers\COC\GetArchivoPlantillaController;
+use App\Http\Controllers\COC\GetAllCadenasController;
 
 // API CLIENTES
 use App\Http\Controllers\ApiClientes\LoginController;
@@ -159,6 +160,7 @@ Route::middleware('auth:sanctum')->apiResource('GetProyectos', GetProyectosContr
 
 Route::apiResource('GetDocumentoCOC', GetDocumentoCOCController::class);
 Route::apiResource('GetDataCOC', GetDataCOCController::class);
+Route::apiResource('GetAllCadenas', GetAllCadenasController::class);
 
 Route::middleware('auth:sanctum')->apiResource('GetEmpresasPorUsuario', GetEmpresasPorUsuarioController::class);
 Route::middleware('auth:sanctum')->apiResource('GetAllEstaciones', GetAllEstacionesController::class);

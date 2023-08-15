@@ -67,7 +67,7 @@ class GetDataCOCController extends Controller
             $pre_resultado['data'][] = $cadena->numero_grupo;
             $pre_resultado['data'][] = $cadena->numero_proceso;
             $pre_resultado['data'][] = $cadena->estacion;
-            $pre_resultado['data'][] = $cadena->fecha_inicio;
+            $pre_resultado['data'][] = $cadena->fecha_muestreo;
             $pre_resultado['data'][] = $cadena->tipo_muestra;
             $pre_resultado['render']['color'] = null;
             $pre_resultado['render']['flag'] = false;
