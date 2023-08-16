@@ -124,6 +124,10 @@ Route::apiResource('SetCadenaPlantilla', SetCadenaPlantillaController::class);
 Route::apiResource('SetUpdatePlantilla', SetUpdatePlantillaController::class);
 Route::apiResource('GetCadenaPlantillas', GetCadenaPlantillasController::class);
 Route::apiResource('GetArchivoPlantilla', GetArchivoPlantillaController::class);
+Route::apiResource('GetDocumentoCOC', GetDocumentoCOCController::class);
+Route::apiResource('GetDataCOC', GetDataCOCController::class);
+Route::apiResource('GetAllCadenas', GetAllCadenasController::class);
+
 
 //Extras
 Route::apiResource('UpdateEmpresaMuestra', UpdateEmpresaMuestraController::class);
@@ -157,10 +161,6 @@ Route::middleware('auth:sanctum')->apiResource('SetUsuario', SetUsuarioControlle
 Route::middleware('auth:sanctum')->apiResource('GetColumnas', GetColumnasController::class);
 Route::middleware('auth:sanctum')->apiResource('GetUsuarios', GetUsuariosController::class);
 Route::middleware('auth:sanctum')->apiResource('GetProyectos', GetProyectosController::class);
-
-Route::apiResource('GetDocumentoCOC', GetDocumentoCOCController::class);
-Route::apiResource('GetDataCOC', GetDataCOCController::class);
-Route::apiResource('GetAllCadenas', GetAllCadenasController::class);
 
 Route::middleware('auth:sanctum')->apiResource('GetEmpresasPorUsuario', GetEmpresasPorUsuarioController::class);
 Route::middleware('auth:sanctum')->apiResource('GetAllEstaciones', GetAllEstacionesController::class);

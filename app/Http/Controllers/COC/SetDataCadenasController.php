@@ -34,8 +34,11 @@ class SetDataCadenasController extends Controller
             #Sepramos para actualizar y para insertar
             #Insertar
             $insertar = $request->insertar;             
+            $chunks = array_chunk($insertar, 500);
 
-            DB::table('cadenas')->insert($insertar);
+            foreach ($chunks as $chunk) {
+                DB::table('cadenas')->insert($chunk);
+            }
 
             //Update
             foreach ($request->actualizar as $cadena) {

@@ -34,10 +34,8 @@ class CadenaCustodiaExport
 
     public function export(): StreamedResponse
     {
-        // Carga el archivo de Excel existente
-        \Log::info("dasdsr aqui"."\n");
+        // Carga el archivo de Excel existente        
         $spreadsheet = IOFactory::load(storage_path('app/public/Book3.xlsx'));
-        \Log::info("Pasr aqui"."\n");
         // Obtiene la primera hoja en el archivo (ajusta esto si necesitas trabajar con múltiples hojas)
         $worksheet = $spreadsheet->getActiveSheet();
 
@@ -50,12 +48,48 @@ class CadenaCustodiaExport
         // Itera sobre las celdas y realiza las modificaciones
         //\Log::info($highestColumn."\n");
         $contador_laboratorio = 0;
-        $contador_in_situ = 0;
+        $contador_insitu = 0;
         $contador_muestras = 0;
         $inicio_parametros_laboratorio = 0;
         $inicio_parametros_in_situ = 0;
+        #Recorro toda la plantilla y busco la cantidad de laboratorio e insitu
+        $flag = false;
+        for ($row = 1; $row <= $highestRow; $row++) {
+            $col = 'A';
+            while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
+                $cellValue = $worksheet->getCell($col . $row)->getValue();
+                if(substr($cellValue, -strlen("_LABORATORIO]")) == "_LABORATORIO]") {
+                    $contador_laboratorio++;
+                    $flag = true;
+                } else {
+                    if($flag == true) {
+                        break;
+                        $row = $highestRow + 1;
+                    }
+                }                
+                $col = $this->sumarLetra($col);
+            }
+        }
+        #insitu
+        $flag = false;
+        for ($row = 1; $row <= $highestRow; $row++) {
+            $col = 'A';
+            while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
+                $cellValue = $worksheet->getCell($col . $row)->getValue();
+                if(substr($cellValue, -strlen("_INSITU]")) == "_INSITU]") {
+                    $contador_insitu++;
+                    $flag = true;
+                } else {
+                    if($flag == true) {
+                        break;
+                        $row = $highestRow + 1;
+                    }
+                }                
+                $col = $this->sumarLetra($col);
+            }
+        }
+        dd($contador_insitu);
         //Recorro en busca de metodos de laboratorio y relleno
-        //dd($info[1]);
         //\Log::info("POr aqui"."\n");
         //\Log::info($highestRow."\n");
         //\Log::info($this->column_to_number($highestColumn)."\n");
@@ -82,7 +116,6 @@ class CadenaCustodiaExport
             $col = 'A';
             while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
                 $cellValue = $worksheet->getCell($col . $row)->getValue();
-
                 if ($cellValue  == "[PARAMETROS_IN_SITU]" & count($parametros_in_situ) > $contador_in_situ) {
                     if($inicio_parametros_in_situ == 0){
                         $inicio_parametros_in_situ = $this->column_to_number($col);
