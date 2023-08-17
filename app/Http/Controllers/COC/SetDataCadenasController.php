@@ -8,6 +8,7 @@ use App\Models\Cadenas;
 use App\Models\CadenaLaboratorioParametros;
 use App\Models\CadenaInSituParametros;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 use Throwable;
 
 class SetDataCadenasController extends Controller
@@ -34,14 +35,20 @@ class SetDataCadenasController extends Controller
             #Sepramos para actualizar y para insertar
             #Insertar
             $insertar = $request->insertar;             
-            $chunks = array_chunk($insertar, 500);
-
-            foreach ($chunks as $chunk) {
-                DB::table('cadenas')->insert($chunk);
+            foreach ($insertar as &$value) {
+                if($value['fecha_muestreo'] != null) {
+                    $fechaCarbon = Carbon::createFromFormat('d/m/Y', $value['fecha_muestreo']);
+                    $fechaFormateada = $fechaCarbon->toDateString();
+                    $value['fecha_muestreo'] = $fechaFormateada;
+                }
+                $value['created_at'] = Carbon::now();
+                $value['updated_at'] = Carbon::now();
             }
+            DB::table('cadenas')->insert($insertar);
 
             //Update
             foreach ($request->actualizar as $cadena) {
+                $cadena['updated_at'] = Carbon::now();
                 DB::table('cadenas')->where('codigo_laboratorio', $cadena['codigo_laboratorio'])->update($cadena);
             }
 
