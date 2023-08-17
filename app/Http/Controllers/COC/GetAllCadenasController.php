@@ -4,10 +4,9 @@ namespace App\Http\Controllers\COC;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\CadenaPlantillas;
-use Throwable;
+use Illuminate\Support\Facades\DB;
 
-class SetCadenaPlantillaController extends Controller
+class GetAllCadenasController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -27,32 +26,9 @@ class SetCadenaPlantillaController extends Controller
      */
     public function store(Request $request)
     {
-        try {
-            $request->validate([
-                'plantilla' => 'required|file',
-            ]);
+        $cadenas = DB::table("cadenas as c")->select('codigo_laboratorio','numero_grupo','numero_proceso','numero_orden_servicio','estacion','fecha_muestreo','tipo_muestra','informacion_adicional')->get();
         
-            $file = $request->file('plantilla');
-            $fileName = $request->nombre_plantilla;
-            $fileContent = file_get_contents($file);
-            $extension = $file->getClientOriginalExtension();
-        
-            $plantilla = new CadenaPlantillas;
-            $plantilla->nombre_plantilla = $fileName;
-            $plantilla->plantilla = $fileContent;
-            $plantilla->extension = $extension;
-            $plantilla->save();
-        
-            $rpta["estado"] = "OK";
-            $rpta["mensaje"] = "Insercion Correcta del archivo: ".$fileName;
-
-        } catch (Throwable $e) {
-            report($e);
-            $rpta["estado"] = "ERROR";
-            $rpta["mensaje"] = $e->getMessage();
-        }
-
-        return $rpta;
+        return $cadenas;
     }
 
     /**
