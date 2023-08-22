@@ -22,10 +22,14 @@ class CreateCadenasTable extends Migration
             $table->string('estacion',100)->nullable();
             $table->date('fecha_muestreo')->nullable();
             $table->string('tipo_muestra',50)->nullable();
-            $table->string('id_empresa',7)->nullable();
-            $table->string('id_pais',2)->nullable();
+            $table->foreignId('id_empresa')->nullable();
+            $table->string('nombre_empresa',150)->nullable();
+            $table->foreignId('id_pais')->nullable();
             $table->json('informacion_adicional');
             $table->timestamps();
+            $table->index('id_pais');
+            $table->index('id_empresa');
+            $table->foreign('id_pais')->references('id')->on('regiones');
         });
     }
 

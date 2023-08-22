@@ -18,6 +18,7 @@ use Maatwebsite\Excel\Files\LocalTemporaryFile;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Files\TemporaryFile;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CadenaCustodiaExport
@@ -50,19 +51,25 @@ class CadenaCustodiaExport
         $contador_laboratorio = 0;
         $contador_insitu = 0;
         $contador_muestras = 0;
-        $inicio_parametros_laboratorio = 0;
-        $inicio_parametros_in_situ = 0;
+        $inicio_parametros_laboratorio = '';
+        $inicio_parametros_in_situ = '';
         #Recorro toda la plantilla y busco la cantidad de laboratorio e insitu
-        $flag = false;
+        $flag_laboratorio = false;
         for ($row = 1; $row <= $highestRow; $row++) {
             $col = 'A';
             while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
                 $cellValue = $worksheet->getCell($col . $row)->getValue();
                 if(substr($cellValue, -strlen("_LABORATORIO]")) == "_LABORATORIO]") {
                     $contador_laboratorio++;
-                    $flag = true;
+                    $flag_laboratorio = true;
+                    $texto = str_replace("[","",$cellValue);
+                    $texto = str_replace("]","",$texto);
+                    $texto_nombre_laboratorio = $texto;
+                    if($inicio_parametros_laboratorio == '') {
+                        $inicio_parametros_laboratorio = $col;
+                    }
                 } else {
-                    if($flag == true) {
+                    if($flag_laboratorio == true) {
                         break;
                         $row = $highestRow + 1;
                     }
@@ -71,16 +78,22 @@ class CadenaCustodiaExport
             }
         }
         #insitu
-        $flag = false;
+        $flag_insitu = false;
         for ($row = 1; $row <= $highestRow; $row++) {
             $col = 'A';
             while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
                 $cellValue = $worksheet->getCell($col . $row)->getValue();
                 if(substr($cellValue, -strlen("_INSITU]")) == "_INSITU]") {
                     $contador_insitu++;
-                    $flag = true;
+                    $flag_insitu = true;
+                    $texto = str_replace("[","",$cellValue);
+                    $texto = str_replace("]","",$texto);
+                    $texto_nombre_insitu = $texto;
+                    if($inicio_parametros_in_situ == '') {
+                        $inicio_parametros_in_situ = $col;
+                    }                    
                 } else {
-                    if($flag == true) {
+                    if($flag_insitu == true) {
                         break;
                         $row = $highestRow + 1;
                     }
@@ -88,104 +101,211 @@ class CadenaCustodiaExport
                 $col = $this->sumarLetra($col);
             }
         }
-        dd($contador_insitu);
-        //Recorro en busca de metodos de laboratorio y relleno
-        //\Log::info("POr aqui"."\n");
-        //\Log::info($highestRow."\n");
-        //\Log::info($this->column_to_number($highestColumn)."\n");
+        #Numero Muestras
+        $flag_insitu = false;
         for ($row = 1; $row <= $highestRow; $row++) {
             $col = 'A';
             while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
                 $cellValue = $worksheet->getCell($col . $row)->getValue();
+                if(preg_match('/\[BUCLE\]\[.*?\]/', $cellValue)) {
+                    $contador_muestras++;
+                    $flag_muestras = true;
+                    break;
+                }
+                $col = $this->sumarLetra($col);
+            }
+        }
+        //Averiguo la cantidad de hojas que necesito
+        $cantidad_hojas_laboratorio = intdiv(count($parametros_laboratorio[$texto_nombre_laboratorio]),$contador_laboratorio);
+        $cantidad_hojas_insitu = intdiv(count($parametros_in_situ[$texto_nombre_insitu]),$contador_insitu);
+        $num_hojas_parametros = max($cantidad_hojas_laboratorio, $cantidad_hojas_insitu);
+        $cantidad_hojas_muestras = intdiv(count($info),$contador_muestras);
+        $num_hojas_totales = $num_hojas_parametros + $cantidad_hojas_muestras;
+        //dd($num_hojas_totales);
+        for ($i=1; $i <= $num_hojas_totales; $i++) {
+            // Agrega la hoja copiada al archivo de Excel
+            $clonedWorksheet = clone $spreadsheet->getActiveSheet();
+            //obtengo nombre de la hojas actual
+            $activeSheetName = $worksheet->getTitle();
+            //creo las nuevas hojas
+            $clonedWorksheet->setTitle($activeSheetName."(".$i.")");
+            $spreadsheet->addSheet($clonedWorksheet);
+        }
 
-                if ($cellValue  == "[METODO_LABORATORIO]" & count($parametros_laboratorio) > $contador_laboratorio) {
-                    if($inicio_parametros_laboratorio == 0){
-                        $inicio_parametros_laboratorio = $this->column_to_number($col);
-                    }
-                    //\Log::info($parametros_laboratorio[$contador_laboratorio]->parametro."\n");
-                    $worksheet->setCellValue($col . $row, $parametros_laboratorio[$contador_laboratorio]);
-                    $contador_laboratorio++;
-                }
-                $col = $this->sumarLetra($col);
-            }
-        }
-        //\Log::info("ahora aqui"."\n");
-        $contador_laboratorio = 0;
-        //Recorro en busca de parametros in situ y relleno
-        for ($row = 1; $row <= $highestRow; $row++) {
-            $col = 'A';
-            while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
-                $cellValue = $worksheet->getCell($col . $row)->getValue();
-                if ($cellValue  == "[PARAMETROS_IN_SITU]" & count($parametros_in_situ) > $contador_in_situ) {
-                    if($inicio_parametros_in_situ == 0){
-                        $inicio_parametros_in_situ = $this->column_to_number($col);
-                    }
-                    //\Log::info($parametros_laboratorio[$contador_laboratorio]->parametro."\n");
-                    $worksheet->setCellValue($col . $row, $parametros_in_situ[$contador_in_situ]);
-                    $contador_in_situ++;
-                }
-                $col = $this->sumarLetra($col);
-            }
-        }
-        $contador_veces = 0;
-        for ($row = 1; $row <= $highestRow; $row++) {
-            $col = 'A';
-            if($worksheet->getCell("A". $row)->getValue() == "[ESTACION]") {
-                $contador_veces++;
-                if($contador_veces == 1 || $contador_veces == 0) {
-                    $contador_muestras = 0;    
-                } else {
-                    $contador_muestras = $contador_veces - 1;
-                }
-            }
-            $contador_laboratorio = 0;
-            while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
-                $cellValue = $worksheet->getCell($col . $row)->getValue();
-                
-                //Busco y reeemplazo
-                $texto = str_replace("[","",$cellValue);
-                $texto = str_replace("]","",$texto);
-                //\Log::info($texto."\n");
-                if(count($info) > $contador_muestras) {
-                    if (array_key_exists($texto, $info[$contador_muestras])) {
-                        $patron = '/^\[.*\]$/';
-                        if(preg_match($patron,$cellValue)) {
-                            $worksheet->setCellValue($col . $row, $info[$contador_muestras][$texto]);
-                        }
-                    } elseif ($cellValue == "[EXISTE_METODO]" & count($parametros_laboratorio) > $contador_laboratorio) {
-                        //dd($parametros_laboratorio[$contador_laboratorio]);
-                        //\Log::info($contador_muestras."Estacin \n");
-                        \Log::info($contador_muestras."\n");
-                        if(count($info[$contador_muestras]["METODOS_LABORATORIO"]) > 0) {
-                            if($info[$contador_muestras]["METODOS_LABORATORIO"][0] == $parametros_laboratorio[$contador_laboratorio]) {
-                                $worksheet->setCellValue($col . $row, "X");
-                                unset($info[$contador_muestras]["METODOS_LABORATORIO"][0]);
-                                $info[$contador_muestras]["METODOS_LABORATORIO"] = array_values($info[$contador_muestras]["METODOS_LABORATORIO"]);
-                            } else {
-                                $worksheet->setCellValue($col . $row, "");
+        #Laboratorio
+        $patron = '/^\[.*\]$/';
+        $n = 0;
+        while(count($parametros_laboratorio[$texto_nombre_laboratorio]) > $n*$contador_laboratorio) {
+            $parametros = array_slice($parametros_laboratorio[$texto_nombre_laboratorio],($n)*$contador_laboratorio,$contador_laboratorio);
+            $sheet = $spreadsheet->getSheet($n);
+            $tag = false;
+            $contador2 = 0;
+            $tag_inicio = false;
+            for ($row = 1; $row <= $highestRow; $row++) {
+                $col = 'A';
+                $contador=0;
+                while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
+                    $cellValue = $sheet->getCell($col . $row)->getValue();
+                    if (preg_match('/\[BUCLE\]\[.*?\]/', $cellValue)) {
+                        if(count($info) > $contador2 + 1) {
+                            if($tag_inicio) {
+                                $contador2++;
                             }
+                            $tag_inicio = true;
                         } else {
-                            $worksheet->setCellValue($col . $row, "");
-                        }
-                        $contador_laboratorio++;
-                    } else {
-                        //aca si tiene el formato [texto] lo reemplazo por vacio
-                        $patron = '/^\[.*\]$/';
-                        if (preg_match($patron,$cellValue)) {
-                            $worksheet->setCellValue($col . $row, "");
+                            $tag = true;
                         }
                     }
-                } else {
-                    //aca si tiene el formato [texto] lo reemplazo por vacio
-                    $patron = '/^\[.*\]$/';
-                    if (preg_match($patron,$cellValue)) {
-                        $worksheet->setCellValue($col . $row, "");
+                    if (preg_match('/\[BUCLE\]\[.*?\]/', $cellValue) && $tag) {
+                        break;
                     }
+                    $texto = str_replace("[","",$cellValue);
+                    $texto = str_replace("]","",$texto);
+                    if(substr($cellValue, -strlen("_LABORATORIO]")) == "_LABORATORIO]") {
+                        if($texto_nombre_laboratorio == $texto) {
+                            if (array_key_exists($contador,$parametros)) {
+                                $sheet->setCellValue($col . $row, $parametros[$contador]);
+                                $contador++;
+                            }
+                        } elseif((substr($cellValue, 0, strlen("[EXISTE_")) == "[EXISTE_") && (substr($cellValue, -strlen("_LABORATORIO]")) == "_LABORATORIO]")) {
+                            $i=$contador2;                        
+                            foreach($info[$i]['PARAMETROS_LABORATORIO'] as $valor) {
+                                //dd($valor);
+                                if($valor->{strtolower($texto_nombre_laboratorio)} != null) {
+                                    if($this->column_to_number($col)-$this->column_to_number($inicio_parametros_laboratorio) < count($parametros)) {
+                                        if($valor->{strtolower($texto_nombre_laboratorio)} == $parametros[$this->column_to_number($col)-$this->column_to_number($inicio_parametros_laboratorio)]) {
+                                            $sheet->setCellValue($col . $row, 'X');
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    $col = $this->sumarLetra($col);
                 }
-                $col = $this->sumarLetra($col);
-                //\Log::info($col." : ".$texto."\n");
             }
-            
+            $n++;
+        }
+
+        #In Situ
+        $n = 0;
+        while(count($parametros_in_situ[$texto_nombre_insitu]) > $n*$contador_insitu) {
+            $parametros = array_slice($parametros_in_situ[$texto_nombre_insitu],($n)*$contador_insitu,$contador_insitu);
+            $sheet = $spreadsheet->getSheet($n);
+            $tag = false;
+            $contador2 = 0;
+            $tag_inicio = false;
+            for ($row = 1; $row <= $highestRow; $row++) {
+                $col = 'A';
+                $contador=0;
+                while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
+                    $cellValue = $sheet->getCell($col . $row)->getValue();
+                    if (preg_match('/\[BUCLE\]\[.*?\]/', $cellValue)) {
+                        if(count($info) > $contador2 + 1) {
+                            if($tag_inicio) {
+                                $contador2++;
+                            }
+                            $tag_inicio = true;
+                        } else {
+                            $tag = true;
+                        }
+                    }
+                    if (preg_match('/\[BUCLE\]\[.*?\]/', $cellValue) && $tag) {
+                        break;
+                    }
+                    
+                    $texto = str_replace("[","",$cellValue);
+                    $texto = str_replace("]","",$texto);
+                    if(substr($cellValue, -strlen("_INSITU]")) == "_INSITU]") {
+                        if($texto_nombre_insitu == $texto) {
+                            if (array_key_exists($contador,$parametros)) {
+                                $sheet->setCellValue($col . $row, $parametros[$contador]);
+                                $contador++;
+                            }
+                        } elseif((preg_match($patron, $cellValue)) && (substr($cellValue, -strlen("_INSITU]")) == "_INSITU]")) {
+                            $i=$contador2;                        
+                            foreach($info[$i]['PARAMETROS_INSITU'] as $valor) {
+                                if($valor->{strtolower($texto_nombre_insitu)} != null) {
+                                    if($this->column_to_number($col)-$this->column_to_number($inicio_parametros_in_situ) < count($parametros)) {
+                                        if($valor->{strtolower($texto_nombre_insitu)} == $parametros[$this->column_to_number($col)-$this->column_to_number($inicio_parametros_in_situ)]) {
+                                            $sheet->setCellValue($col . $row, $valor->{strtolower($texto)});
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    $col = $this->sumarLetra($col);
+                }
+            }
+            $n++;
+        }
+
+        #Recorro y reemplazo
+        for ($i=0; $i <= $num_hojas_totales; $i++) {
+            $sheet = $spreadsheet->getSheet($i);
+            $contador = 0;
+            $tag = false;
+            $tag_inicio = false;
+            for ($row = 1; $row <= $highestRow; $row++) {
+                $col = 'A';
+                while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
+                    $cellValue = $sheet->getCell($col . $row)->getValue();
+                    $patron = '/^\[.*\]$/';
+                    if (preg_match('/\[BUCLE\]\[.*?\]/', $cellValue)) {
+                        if(count($info) > $contador + 1) {
+                            if($tag_inicio) {
+                                $contador++;
+                            }
+                            $tag_inicio = true;
+                        } else {
+                            $tag = true;
+                        }
+                    }
+                    if (preg_match('/\[BUCLE\]\[.*?\]/', $cellValue) && $tag) {
+                        break;
+                    }
+
+                    if((preg_match($patron, $cellValue)) && (substr($cellValue, -strlen("_LABORATORIO]")) != "_LABORATORIO]") && (substr($cellValue, -strlen("_INSITU]")) != "_INSITU]")) {
+                        $texto = str_replace("[BUCLE]","",$cellValue);
+                        $texto = str_replace("[","",$texto);
+                        $texto = str_replace("]","",$texto);
+                        //dd($contador);
+                        if (array_key_exists($texto, $info[$contador])) {
+                            $sheet->setCellValue($col . $row, $info[$contador][$texto]);
+                        }
+                    }
+
+                    if((preg_match($patron, $cellValue)) && (substr($cellValue, -strlen("_INSITU]")) == "_INSITU]")) {
+                        //dd($cellValue);
+                        $texto = str_replace("[","",$cellValue);
+                        $texto = str_replace("]","",$texto);
+                        if (array_key_exists($texto, $info[$contador])) {
+                            //dd($info[$contador]['PARAMETROS_INSITU'][0]);
+                            //dd($texto);
+                            $sheet->setCellValue($col . $row, $info[$contador]['PARAMETROS_INSITU'][$texto]);
+                        }
+                    }
+                    $col = $this->sumarLetra($col);
+
+                    
+                }
+            }
+
+            //Busco y dejo en blanco los campos [] no rellenados        
+            for ($row = 1; $row <= $highestRow; $row++) {
+                $col = 'A';
+                while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
+                    $cellValue = $sheet->getCell($col . $row)->getValue();
+                    $patron = '/^\[.*\]$/';
+                    if(preg_match($patron, $cellValue)) {                    
+                        $sheet->setCellValue($col . $row, "");
+                    }
+                    
+                    $col = $this->sumarLetra($col);
+                }
+            }
         }
 
         // Prepara la respuesta de transmisión

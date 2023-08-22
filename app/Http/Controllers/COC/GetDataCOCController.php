@@ -72,7 +72,7 @@ class GetDataCOCController extends Controller
             $pre_resultado['render']['color'] = null;
             $pre_resultado['render']['flag'] = false;
             $pre_resultado['render']['con_documentos'] = false;
-            $pre_resultado['id'] = $cadena->id;
+            $pre_resultado['id'] = intval($cadena->codigo_laboratorio);
 
             array_push($resultado, $pre_resultado);
         }

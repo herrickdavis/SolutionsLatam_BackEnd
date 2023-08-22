@@ -44,14 +44,6 @@ class GetDocumentoCOCController extends Controller
         $all_parametros_laboratorio = [];
         $all_parametros_insitu = [];
         foreach($db_cadenas as $cadena) {
-            /*$cadenas[$cadena->codigo_laboratorio]['CODIGO'] = $cadena->codigo_laboratorio;
-            $cadenas[$cadena->codigo_laboratorio]['NUMERO_GRUPO'] = $cadena->numero_grupo;
-            $cadenas[$cadena->codigo_laboratorio]['NUMERO_PROCESO'] = $cadena->numero_proceso;
-            $cadenas[$cadena->codigo_laboratorio]['NUMERO_ORDEN_SERVICIO'] = $cadena->numero_orden_servicio;
-            $cadenas[$cadena->codigo_laboratorio]['ESTACION'] = $cadena->estacion;
-            $cadenas[$cadena->codigo_laboratorio]['FECHA_MUESTREO'] = $cadena->fecha_muestreo;
-            $cadenas[$cadena->codigo_laboratorio]['TIPO_MUESTRA'] = $cadena->tipo_muestra;
-            $cadenas[$cadena->codigo_laboratorio]['INFO_ADICIONAL'] = $cadena->informacion_adicional;*/
             $info_adicional = json_decode($cadena->informacion_adicional);
             foreach ($info_adicional as $key => $value) {                
                 $cadenas[$cadena->codigo_laboratorio][strtoupper($key)] = $value;
@@ -72,6 +64,7 @@ class GetDocumentoCOCController extends Controller
                 }
             }
         }
+        $cadenas = array_values($cadenas);
         #Quito duplicados
         foreach ($all_parametros_laboratorio as $key => $value) {
             $parametros_unicos = array_unique($value);
