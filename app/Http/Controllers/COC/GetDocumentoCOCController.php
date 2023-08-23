@@ -4,13 +4,9 @@ namespace App\Http\Controllers\COC;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Exports\UsersExport;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\CadenaCustodiaExport;
 use Illuminate\Support\Facades\DB;
-use Dompdf\Dompdf;
-use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Writer\Html;
+use Illuminate\Support\Facades\Storage;
 
 class GetDocumentoCOCController extends Controller
 {
@@ -32,6 +28,16 @@ class GetDocumentoCOCController extends Controller
      */
     public function store(Request $request)
     {
+        //Obtenemos el documento
+        $id_documento = $request->id_plantilla;
+
+        //Consultar la base de datos para obtener el blob
+        $archivo = DB::table('cadena_plantillas')->where('id', $id_documento)->first();
+
+        //Escribir el blob a un archivo
+        $nombreArchivo = 'public/excel_' . $id_documento . '.xlsx';
+        Storage::disk('local')->put($nombreArchivo, $archivo->plantilla); 
+
         //Leemos Datos
         $id_cadena = $request->id_muestras;
         //Terminamos de leer datos
@@ -51,14 +57,14 @@ class GetDocumentoCOCController extends Controller
 
             foreach($info_adicional->parametros_laboratorio as $param_laboratory) {
                 foreach ($param_laboratory as $key => $value) {
-                    if($value != null) {
+                    if(($value != null) && $value != "None") {
                         $all_parametros_laboratorio[strtoupper($key)][] = $value;
                     }
                 }
             }
             foreach($info_adicional->parametros_insitu as $param_laboratory) {
                 foreach ($param_laboratory as $key => $value) {
-                    if($value != null) {
+                    if(($value != null) && $value != "None") {
                         $all_parametros_insitu[strtoupper($key)][] = $value;
                     }                    
                 }
@@ -77,7 +83,7 @@ class GetDocumentoCOCController extends Controller
             $all_parametros_insitu[$key] = $parametros_unicos;
         }
         $export = new CadenaCustodiaExport();
-        $export->setData($cadenas, $all_parametros_laboratorio, $all_parametros_insitu);
+        $export->setData($cadenas, $all_parametros_laboratorio, $all_parametros_insitu, $nombreArchivo);
         
         return $export->export();
     }

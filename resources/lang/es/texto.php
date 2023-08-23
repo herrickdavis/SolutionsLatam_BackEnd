@@ -29,6 +29,7 @@ return [
   'codigo_muestra' => 'Cod. Muestra',
   'numero_grupo' => 'Num. Grupo',
   'numero_muestra' => 'Num. Muestra',
+  'numero_proceso' => 'Num. Proceso',
   'Estado' => 'Estado',
   'Solicitante' => 'Solicitante',
   'Contratante' => 'Contratante',
