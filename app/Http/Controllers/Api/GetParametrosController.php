@@ -28,7 +28,7 @@ class GetParametrosController extends Controller
      */
     public function store(Request $request)
     {
-        DB::enableQueryLog();
+        //DB::enableQueryLog();
         try {
             $usuario = $request->user();
             
@@ -131,7 +131,7 @@ class GetParametrosController extends Controller
 
             $sql_parametros = $sql_parametros->get();
 
-            $queries = DB::getQueryLog();
+            /*$queries = DB::getQueryLog();
             // Recorre cada consulta SQL y mide su tiempo de ejecución
            foreach ($queries as $query) {
                $sql = $query['query'];
@@ -139,7 +139,7 @@ class GetParametrosController extends Controller
                $time = $query['time'];
                $fullSql = vsprintf(str_replace('?', '%s', $sql), $bindings);
                \Log::info('Consulta SQL: ' . $fullSql . ' - Tiempo de ejecución: ' . $time . ' segundos');
-           }
+           }*/
         } catch (Throwable $e) {
             report($e);
             return response()->json(['message' => $e->getMessage()], 400);

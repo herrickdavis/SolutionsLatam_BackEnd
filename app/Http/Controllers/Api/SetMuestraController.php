@@ -14,6 +14,7 @@ use App\Models\Procesos;
 //use App\Models\Matrices;
 use App\Models\TipoMuestras; //1 update por muestra
 use App\Models\Proyectos; //obligatorio
+use App\Models\ProcesoProyectos; //Obligatorio
 use App\Models\Estaciones; //obligatorio
 use App\Models\Unidades; //obligatorio
 use App\Models\Metodos; // se subira como array insertorignore ya un pequeño cambio ya se vuelve un update
@@ -55,7 +56,7 @@ class SetMuestraController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
-    {
+    {        
         ini_set('max_execution_time', 600); //3 minutes
         ini_set('memory_limit', '256M');
 
@@ -305,6 +306,13 @@ class SetMuestraController extends Controller
                     );
                 }
 
+                $sql_proceso_proyecto = ProcesoProyectos::firstOrCreate(
+                    [
+                        'id_proceso' => $id_proceso,
+                        'nombre_proyecto' => $proyecto
+                    ]
+                );
+
                 $sql_proyecto = Proyectos::updateOrCreate(
                     ['nombre_proyecto' => $proyecto],
                     [
@@ -429,6 +437,7 @@ class SetMuestraController extends Controller
                     'id_user_sol' => $sql_usuario_sol->id,
                     'id_estacion' => $sql_estacion->id,
                     'id_proyecto' => $sql_proyecto->id,
+                    'id_proceso_proyecto' => $sql_proceso_proyecto->id,
                     'id_tipo_muestra' => $id_tipo_muestra,
                     'id_matriz' => $id_matriz,
                     'id_limite' => $id_limite,
