@@ -36,7 +36,7 @@ class SetAliasProyectosController extends Controller
             }
 
             //actualizamos los alias 
-            DB::table('proyectos')->whereIn('id', $id)->update(['alias_proyecto' => $alias]);
+            DB::table('proceso_proyectos')->whereIn('id', $id)->update(['alias_proyecto' => $alias]);
 
             $rpta["estado"] = "ok";
             $rpta["mensaje"] = "Se asigno el alias correctamente";

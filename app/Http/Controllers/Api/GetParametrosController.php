@@ -40,32 +40,12 @@ class GetParametrosController extends Controller
             $fuera_limite = $request->fuera_limite;
             $id_estaciones = [];
             $id_grupo_estaciones = [];
-            
-            /*foreach ($estaciones as $estacion) {
-                if (substr($estacion, 0, 1) == "G") {
-                    array_push($id_grupo_estaciones, substr($estacion, 1));
-                } else {
-                    array_push($id_estaciones, substr($estacion, 1));
-                }
-            }*/
-            /*$sql_id_estaciones_grupo = DB::table('grupo_estaciones as ge')
-                                    ->select(DB::raw(
-                                        "ege.id_estacion as id
-                                        "
-                                    ))
-                                    ->join('estacion_grupo_estaciones AS ege', 'ege.id_grupo_estacion', '=', 'ge.id')
-                                    ->whereIn('ege.id_grupo_estacion', $id_grupo_estaciones);
-                    
-            $sql_id_estaciones = DB::table('estaciones as e')
-                                    ->select(DB::raw(
-                                        "e.id as id
-                                        "
-                                    ))
-                                    ->whereIn('id', $id_estaciones)
-                                    ->union($sql_id_estaciones_grupo)
-                                    ->get();
 
-            $sql_id_estaciones = json_decode(json_encode($sql_id_estaciones), true);*/
+            #Primero obtengo las estaciones
+            $id_estaciones = DB::table('estaciones as e')->select(DB::raw("e.id"))->whereIn('e.nombre_estacion', $estaciones)
+            ->orWhere(function ($query) use ($estaciones) {
+                $query->whereIn('e.alias_estacion', $estaciones);
+            })->distinct()->pluck('id')->toArray();
             
             if ($fuera_limite) {
                 $sql_parametros = DB::table('muestras as m')
@@ -76,6 +56,7 @@ class GetParametrosController extends Controller
                             ))
                             ->join('muestra_parametros AS mp', 'mp.id_muestra', '=', 'm.id')
                             ->join('parametros AS p', 'mp.id_parametro', '=', 'p.id')
+                            ->leftjoin('proceso_muestras AS pm', 'pm.id_muestra','=','m.id')
                             ->leftjoin('proyectos AS pr', 'pr.id', '=', 'm.id_proyecto')
                             ->leftjoin('parametro_grupo_parametros AS pgp', 'pgp.id_parametro', '=', 'p.id')
                             ->leftjoin('grupo_parametros AS gp', 'gp.id', '=', 'pgp.id_grupo_parametro')
@@ -83,7 +64,7 @@ class GetParametrosController extends Controller
                             ->where('m.fecha_muestreo', '<', $fecha_fin)
                             ->where('mp.id_parecer', '=', 2)
                             ->where('m.id_tipo_muestra', '=', $id_tipo_muestra)
-                            ->whereIn('m.id_estacion', $sql_id_estaciones)
+                            ->whereIn('e.id',$id_estaciones)
                             ->where('m.activo', '=', 'S')
                             ->distinct()->orderBy('nombre_parametro');
             } else {
@@ -93,6 +74,7 @@ class GetParametrosController extends Controller
                                 case when gp.grupo_parametros is null then p.nombre_parametro else gp.grupo_parametros end as nombre_parametro
                                 "
                             ))
+                            ->leftjoin('proceso_muestras AS pm', 'pm.id_muestra','=','m.id')
                             ->leftjoin('proyectos AS pr', 'pr.id', '=', 'm.id_proyecto')
                             ->join('estaciones AS e', 'e.id', '=', 'm.id_estacion')
                             ->join('muestra_parametros AS mp', 'mp.id_muestra', '=', 'm.id')
@@ -104,31 +86,27 @@ class GetParametrosController extends Controller
                             })
                             ->leftjoin('grupo_parametros AS gp', 'gp.id', '=', 'pgp.id_grupo_parametro')
                             ->where('m.id_tipo_muestra', '=', $id_tipo_muestra)
-                            ->whereIn('e.nombre_estacion',$estaciones)
-                            ->orWhere(function ($query) use ($estaciones) {
-                                $query->whereIn('e.alias_estacion', $estaciones);
-                            })
-                            //->whereIn('m.id_estacion', $sql_id_estaciones)
+                            ->whereIn('e.id',$id_estaciones)
                             ->whereIn('m.id_estado', [3,4])
                             ->where('m.activo', '=', 'S')
                             ->distinct()->orderBy('nombre_parametro');
             }
-            //dd($sql_id_estaciones);
-            $sql_parametros = filtroMuestrasQuery($sql_parametros,$usuario);
 
             if ($id_proyecto) {
-                /*foreach ($id_proyecto as $key => $value) {
-                    $id_proyecto[$key] = str_replace("P", "", $value);
-                }*/
+                $sql_procesos = DB::table('proceso_proyectos as pp')->select(DB::raw("pp.id_proceso"))->whereIn('pp.nombre_proyecto', $id_proyecto)
+                ->orWhere(function ($query) use ($id_proyecto) {
+                    $query->whereIn('pp.alias_proyecto', $id_proyecto);
+                })->distinct()->pluck('id_proceso')->toArray();
 
+                $sql_parametros = $sql_parametros->whereIn('pm.id_proceso', $sql_procesos);
+                
                 $sql_parametros = $sql_parametros->where(function ($query) use ($id_proyecto) {
                     $query->whereIn('pr.nombre_proyecto', $id_proyecto)
                           ->orWhereIn('pr.alias_proyecto', $id_proyecto);
                 });
             }
 
-           
-
+            $sql_parametros = filtroMuestrasQuery($sql_parametros,$usuario);
             $sql_parametros = $sql_parametros->get();
 
             /*$queries = DB::getQueryLog();

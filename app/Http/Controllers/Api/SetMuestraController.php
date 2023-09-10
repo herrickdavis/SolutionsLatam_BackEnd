@@ -306,11 +306,9 @@ class SetMuestraController extends Controller
                     );
                 }
 
-                $sql_proceso_proyecto = ProcesoProyectos::firstOrCreate(
-                    [
-                        'id_proceso' => $id_proceso,
-                        'nombre_proyecto' => $proyecto
-                    ]
+                $sql_proceso_proyecto = ProcesoProyectos::updateOrCreate(
+                    ['id_proceso' => $id_proceso],
+                    ['nombre_proyecto' => $proyecto]
                 );
 
                 $sql_proyecto = Proyectos::updateOrCreate(
