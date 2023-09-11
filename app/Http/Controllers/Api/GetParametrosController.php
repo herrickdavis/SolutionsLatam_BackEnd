@@ -33,7 +33,7 @@ class GetParametrosController extends Controller
             $usuario = $request->user();
             
             $id_tipo_muestra = str_replace("TA", "", $request->id_tipo_muestra);
-            $id_proyecto = str_replace("P", "", $request->id_proyecto);
+            $id_proyecto = $request->id_proyecto;
             $fecha_inicio = $request->fecha_inicio;
             $fecha_fin = $request->fecha_fin;
             $estaciones = $request->estaciones;
@@ -97,18 +97,13 @@ class GetParametrosController extends Controller
                 ->orWhere(function ($query) use ($id_proyecto) {
                     $query->whereIn('pp.alias_proyecto', $id_proyecto);
                 })->distinct()->pluck('id_proceso')->toArray();
-
+                \Log::info($id_proyecto);
+                \Log::info($sql_procesos);
                 $sql_parametros = $sql_parametros->whereIn('pm.id_proceso', $sql_procesos);
-                
-                $sql_parametros = $sql_parametros->where(function ($query) use ($id_proyecto) {
-                    $query->whereIn('pr.nombre_proyecto', $id_proyecto)
-                          ->orWhereIn('pr.alias_proyecto', $id_proyecto);
-                });
             }
 
-            $sql_parametros = filtroMuestrasQuery($sql_parametros,$usuario);
+            //$sql_parametros = filtroMuestrasQuery($sql_parametros,$usuario);
             $sql_parametros = $sql_parametros->get();
-
             /*$queries = DB::getQueryLog();
             // Recorre cada consulta SQL y mide su tiempo de ejecución
            foreach ($queries as $query) {
