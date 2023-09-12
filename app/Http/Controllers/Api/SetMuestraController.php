@@ -277,6 +277,10 @@ class SetMuestraController extends Controller
                     ['id' => $id_motivo_muestra],
                     ['nombre_motivo_muestra' => $nombre_motivo_muestra]
                 );*/
+                Procesos::where('numero', $numero_proceso)
+                            ->where('anho', $anho_proceso)
+                            ->update(['activo' => 'N']);
+                            
                 $sql_empresa_sol = Procesos::updateOrCreate(
                     ['id' => $id_proceso],
                     ['numero' => $numero_proceso, 'anho' => $anho_proceso, 'nombre_proceso' => $nombre_proceso, 'activo' => $proceso_activo]

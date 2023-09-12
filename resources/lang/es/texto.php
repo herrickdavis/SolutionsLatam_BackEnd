@@ -32,6 +32,7 @@ return [
   'numero_grupo' => 'Num. Grupo',
   'numero_muestra' => 'Num. Muestra',
   'numero_proceso' => 'Num. Proceso',
+  'nombre_proceso' => 'ID Proceso',
   'anho_proceso' => 'Año Proceso',
   'Estado' => 'Estado',
   'Solicitante' => 'Solicitante',

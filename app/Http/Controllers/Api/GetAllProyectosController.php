@@ -33,9 +33,9 @@ class GetAllProyectosController extends Controller
             $proyectos =  DB::table('muestras as m')
             ->select(DB::raw(
                 "pp.id as id,
-                p.id as id_proceso,
                 p.numero as numero_proceso, 
                 p.anho AS anho_proceso,
+                p.nombre_proceso as nombre_proceso,
                 pp.nombre_proyecto AS nombre_proyecto,
                 pp.alias_proyecto AS alias_proyecto
                 "
@@ -48,6 +48,7 @@ class GetAllProyectosController extends Controller
             ->leftjoin('procesos AS p', 'p.id', '=', 'pm.id_proceso')
             ->whereIn('m.id_estado', [3,4])
             ->where('m.activo', '=', 'S')
+            ->where('p.activo', '=', 'S')
             ->distinct()->orderBy('fecha_muestreo', 'desc');
             
             $proyectos = filtroMuestrasQuery($proyectos,$usuario);
@@ -57,8 +58,8 @@ class GetAllProyectosController extends Controller
                     $condicion = $filtro['condicion'];
                     $valor = $filtro['valor'];
                     switch ($pre_cabecera) {
-                        case mb_strtolower(trans('texto.id_proceso'), 'UTF-8'):
-                            $proyectos = $this->filtros($proyectos, 'p.id', $condicion, $valor);
+                        case mb_strtolower(trans('texto.nombre_proceso'), 'UTF-8'):
+                            $proyectos = $this->filtros($proyectos, 'p.nombre_proceso', $condicion, $valor);
                             break;
                         case mb_strtolower(trans('texto.numero_proceso'), 'UTF-8'):
                             $proyectos = $this->filtros($proyectos, 'p.numero', $condicion, $valor);
@@ -81,9 +82,9 @@ class GetAllProyectosController extends Controller
             foreach ($proyectos as $proyecto) {
                 $pre_resultado = [];
                 $render = [];
-                $pre_resultado['data'][] = "".$proyecto->id_proceso;
                 $pre_resultado['data'][] = "".$proyecto->numero_proceso;
                 $pre_resultado['data'][] = "".$proyecto->anho_proceso;
+                $pre_resultado['data'][] = "".$proyecto->nombre_proceso;
                 $pre_resultado['data'][] = "".$proyecto->nombre_proyecto;
                 $pre_resultado['data'][] = $proyecto->alias_proyecto;
                 $pre_resultado['render']['color'] = null;
@@ -95,9 +96,9 @@ class GetAllProyectosController extends Controller
             }
 
             $rpta['cabecera'] = $cabecera = [
-                trans('texto.id_proceso'),
                 trans('texto.numero_proceso'),
                 trans('texto.anho_proceso'),
+                trans('texto.nombre_proceso'),
                 trans('texto.Proyecto'),
                 trans('texto.alias_proyecto')
             ];
