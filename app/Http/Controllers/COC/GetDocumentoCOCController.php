@@ -4,13 +4,9 @@ namespace App\Http\Controllers\COC;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Exports\UsersExport;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\CadenaCustodiaExport;
 use Illuminate\Support\Facades\DB;
-use Dompdf\Dompdf;
-use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Writer\Html;
+use Illuminate\Support\Facades\Storage;
 
 class GetDocumentoCOCController extends Controller
 {
@@ -21,14 +17,7 @@ class GetDocumentoCOCController extends Controller
      */
     public function index()
     {
-        $excelFile = storage_path('app/public/Book3.xlsx');
-        $pdfFile = storage_path('app/public/out.pdf');
-
-        $spreadsheet = IOFactory::load($excelFile);
-        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Pdf');
-    $writer->save($pdfFile);
-
-    return response()->download($pdfFile);
+        //
     }
 
     /**
@@ -39,94 +28,64 @@ class GetDocumentoCOCController extends Controller
      */
     public function store(Request $request)
     {
+        //Obtenemos el documento
+        $id_documento = $request->id_plantilla;
+
+        //Consultar la base de datos para obtener el blob
+        $archivo = DB::table('cadena_plantillas')->where('id', $id_documento)->first();
+
+        //Escribir el blob a un archivo
+        $nombreArchivo = 'public/excel_' . $id_documento . '.xlsx';
+        Storage::disk('local')->put($nombreArchivo, $archivo->plantilla); 
+
         //Leemos Datos
         $id_cadena = $request->id_muestras;
         //Terminamos de leer datos
         $db_cadenas = DB::table("cadenas as c")
-            ->select('c.*','lp.parametro as parametro_laboratorio', 'ip.parametro as parametro_in_situ', 'ip.unidad', 'ip.valor')
-            ->leftJoin('cadena_laboratorio_parametros as lp', 'c.id', '=', 'lp.id_cadena')
-            ->leftJoin('cadena_in_situ_parametros as ip', 'c.id', '=', 'ip.id_cadena')
-            ->whereIn('c.id', $id_cadena)
+            ->select('c.*')            
+            ->whereIn('c.codigo_laboratorio', $id_cadena)
             ->get();
         $cadenas = [];
 
+        $all_parametros_laboratorio = [];
+        $all_parametros_insitu = [];
         foreach($db_cadenas as $cadena) {
-            $cadenas[$cadena->id]['CLIENTE'] = $cadena->id;
-            $cadenas[$cadena->id]['CLIENTE'] = $cadena->cliente;
-            $cadenas[$cadena->id]['CONTACTO'] = $cadena->contacto;
-            $cadenas[$cadena->id]['CORREO'] = $cadena->correo;
-            $cadenas[$cadena->id]['LUGAR_PROCEDENCIA'] = $cadena->lugar_procedencia;
-            $cadenas[$cadena->id]['PROYECTO'] = $cadena->proyecto;
-            $cadenas[$cadena->id]['PERIODICO'] = $cadena->periodico;
-            $cadenas[$cadena->id]['ESTACION'] = $cadena->estacion;
-            $cadenas[$cadena->id]['FECHA_INICIO'] = $cadena->fecha_inicio;
-            $cadenas[$cadena->id]['HORA_INICIO'] = $cadena->hora_inicio;
-            $cadenas[$cadena->id]['FECHA_FIN'] = $cadena->fecha_fin;
-            $cadenas[$cadena->id]['HORA_FIN'] = $cadena->hora_fin;
-            $cadenas[$cadena->id]['CODIGO_LABORATORIO'] = $cadena->codigo_laboratorio;
-            $cadenas[$cadena->id]['TIPO_MUESTRA'] = $cadena->tipo_muestra;
-            $cadenas[$cadena->id]['COORDENADA_NORTE'] = $cadena->coordenada_norte;
-            $cadenas[$cadena->id]['COORDENADA_ESTE'] = $cadena->coordenada_este;
-            $cadenas[$cadena->id]['ZONA'] = $cadena->zona;
-            $pcadenasre_cadena[$cadena->id]['CANTIDAD_FRASCOS'] = $cadena->cantidad_frascos;
-            $cadenas[$cadena->id]['OBSERVACIONES'] = $cadena->observaciones;
-            $cadenas[$cadena->id]['NUMERO_GRUPO'] = $cadena->numero_grupo;
-            $cadenas[$cadena->id]['NUMERO_PROCESO'] = $cadena->numero_proceso;
-            $cadenas[$cadena->id]['NUMERO_ORDEN_SERVICIO'] = $cadena->numero_orden_servicio;
-            $cadenas[$cadena->id]['PLAN_MUESTREO'] = $cadena->plan_muestreo;
-            $cadenas[$cadena->id]['EQUIPOS_EMPLEADOS'] = $cadena->equipos_empleados;
-            $cadenas[$cadena->id]['FIRMA_RESPONSABLE_MUESTREO'] = $cadena->firma_responsable_muestreo;
-            $cadenas[$cadena->id]['NOMBRE_RESPONSABLE_MUESTREO'] = $cadena->nombre_responsable_muestreo;
-            $cadenas[$cadena->id]['FECHA_RESPONSABLE_MUESTREO'] = $cadena->fecha_responsable_muestreo;
-            $cadenas[$cadena->id]['FIRMA_RESPONSABLE_TRANSPORTE'] = $cadena->firma_responsable_transporte;
-            $cadenas[$cadena->id]['NOMBRE_RESPONSABLE_TRANSPORTE'] = $cadena->nombre_responsable_transporte;
-            $cadenas[$cadena->id]['FIRMA_RECEPCION_MUESTRA'] = $cadena->firma_recepcion_muestra;
-            $cadenas[$cadena->id]['NOMBRE_RECEPCION_MUESTRA'] = $cadena->nombre_recepcion_muestra;
-            $cadenas[$cadena->id]['FECHA_RECEPCION_MUESTRA'] = $cadena->fecha_recepcion_muestra;
-            if(!array_key_exists('METODOS_LABORATORIO', $cadenas[$cadena->id])) {
-                $cadenas[$cadena->id]['METODOS_LABORATORIO'] = [];
+            $info_adicional = json_decode($cadena->informacion_adicional);
+            foreach ($info_adicional as $key => $value) {                
+                $cadenas[$cadena->codigo_laboratorio][strtoupper($key)] = $value;
             }
-            if(!in_array($cadena->parametro_laboratorio, $cadenas[$cadena->id]['METODOS_LABORATORIO'])) {
-                $cadenas[$cadena->id]['METODOS_LABORATORIO'][] = $cadena->parametro_laboratorio;
+
+            foreach($info_adicional->parametros_laboratorio as $param_laboratory) {
+                foreach ($param_laboratory as $key => $value) {
+                    if(($value != null) && $value != "None") {
+                        $all_parametros_laboratorio[strtoupper($key)][] = $value;
+                    }
+                }
             }
-            $cadenas[$cadena->id]['PARAMETROS_IN_SITU'][$cadena->parametro_in_situ]['VALOR'] = $cadena->valor;
-            $cadenas[$cadena->id]['PARAMETROS_IN_SITU'][$cadena->parametro_in_situ]['UNIDAD'] = $cadena->unidad;
-            //le agrego los parametros in situ como dato
-            $cadenas[$cadena->id][str_replace(" ","_",mb_strtoupper($cadena->parametro_in_situ, 'UTF-8'))] = $cadena->valor;
+            foreach($info_adicional->parametros_insitu as $param_laboratory) {
+                foreach ($param_laboratory as $key => $value) {
+                    if(($value != null) && $value != "None") {
+                        $all_parametros_insitu[strtoupper($key)][] = $value;
+                    }                    
+                }
+            }
         }
-        //obtengo todos los parametros de laboratorio
-        $db_parametros_laboratorio = DB::table("cadena_laboratorio_parametros as lp")
-            ->select('lp.parametro')
-            ->leftJoin('cadenas as c', 'c.id', '=', 'lp.id_cadena')
-            ->whereIn('lp.id_cadena', $id_cadena)
-            ->distinct()
-            ->orderBy('parametro', 'asc')
-            ->get();
-        $parametros_laboratorio = [];
-        foreach($db_parametros_laboratorio as $parametro_laboratorio) {
-            array_push($parametros_laboratorio, $parametro_laboratorio->parametro);
-        }
-        //dd($parametros_laboratorio);
-        //obtengo todos los parametros de laboratorio
-        $db_parametros_in_situ = DB::table("cadena_in_situ_parametros as ip")
-            ->select('ip.parametro', 'ip.valor', 'ip.unidad')
-            ->leftJoin('cadenas as c', 'c.id', '=', 'ip.id_cadena')
-            ->whereIn('ip.id_cadena', $id_cadena)
-            ->orderBy('parametro', 'asc')
-            ->get();
-        $parametros_in_situ = [];
-        foreach($db_parametros_in_situ as $parametro_in_situ) {
-            array_push($parametros_in_situ, $parametro_in_situ->parametro);
-        }
-        $parametros_in_situ = array_values(array_unique($parametros_in_situ));
         $cadenas = array_values($cadenas);
+        #Quito duplicados
+        foreach ($all_parametros_laboratorio as $key => $value) {
+            $parametros_unicos = array_unique($value);
+            sort($parametros_unicos);
+            $all_parametros_laboratorio[$key] = $parametros_unicos;
+        }
+        foreach ($all_parametros_insitu as $key => $value) {
+            $parametros_unicos = array_unique($value);
+            sort($parametros_unicos);
+            $all_parametros_insitu[$key] = $parametros_unicos;
+        }
         $export = new CadenaCustodiaExport();
-        $export->setData($cadenas, $parametros_laboratorio, $parametros_in_situ);
+        $export->setData($cadenas, $all_parametros_laboratorio, $all_parametros_insitu, $nombreArchivo);
         
         return $export->export();
-        //
-        //return Excel::download($export, 'COC.xlsx');
-        //return $users;
     }
 
     /**

@@ -32,14 +32,23 @@ class GetAllProyectosController extends Controller
             $filtros = $request->filtros;
             $proyectos =  DB::table('muestras as m')
             ->select(DB::raw(
-                "p.id as id,
-                p.nombre_proyecto AS nombre_proyecto,
-                p.alias_proyecto AS alias_proyecto
+                "pp.id as id,
+                p.numero as numero_proceso, 
+                p.anho AS anho_proceso,
+                p.nombre_proceso as nombre_proceso,
+                pp.nombre_proyecto AS nombre_proyecto,
+                pp.alias_proyecto AS alias_proyecto
                 "
             ))
-            ->leftjoin('proyectos AS p', 'p.id', '=', 'm.id_proyecto')
+            ->leftjoin('proceso_muestras AS pm', function ($join) {
+                $join->on('pm.id_muestra', '=', 'm.id')
+                     ->whereRaw('pm.id_proceso = (select min(pm2.id_proceso) from proceso_muestras as pm2 where pm2.id_muestra = m.id)');
+            })
+            ->leftjoin('proceso_proyectos AS pp', 'pp.id_proceso', '=', 'pm.id_proceso')
+            ->leftjoin('procesos AS p', 'p.id', '=', 'pm.id_proceso')
             ->whereIn('m.id_estado', [3,4])
             ->where('m.activo', '=', 'S')
+            ->where('p.activo', '=', 'S')
             ->distinct()->orderBy('fecha_muestreo', 'desc');
             
             $proyectos = filtroMuestrasQuery($proyectos,$usuario);
@@ -47,15 +56,22 @@ class GetAllProyectosController extends Controller
                 foreach ($filtros as $filtro) {                
                     $pre_cabecera = $filtro['cabecera'];
                     $condicion = $filtro['condicion'];
-                    $valor = $filtro['valor']; 
-                    \Log::info('Showing the user profile for user: '.$pre_cabecera.' '.mb_strtolower(trans('texto.Estacion'), 'UTF-8'));               
+                    $valor = $filtro['valor'];
                     switch ($pre_cabecera) {
+                        case mb_strtolower(trans('texto.nombre_proceso'), 'UTF-8'):
+                            $proyectos = $this->filtros($proyectos, 'p.nombre_proceso', $condicion, $valor);
+                            break;
+                        case mb_strtolower(trans('texto.numero_proceso'), 'UTF-8'):
+                            $proyectos = $this->filtros($proyectos, 'p.numero', $condicion, $valor);
+                            break;
+                        case mb_strtolower(trans('texto.anho_proceso'), 'UTF-8'):
+                            $proyectos = $this->filtros($proyectos, 'p.anho', $condicion, $valor);
+                            break;
                         case mb_strtolower(trans('texto.Proyecto'), 'UTF-8'):
-                            \Log::info("Filtramos");
-                            $proyectos = $this->filtros($proyectos, 'p.nombre_proyecto', $condicion, $valor);
+                            $proyectos = $this->filtros($proyectos, 'pp.nombre_proyecto', $condicion, $valor);
                             break;
                         case strtolower(trans('texto.alias_proyecto')):
-                            $proyectos = $this->filtros($proyectos, 'p.alias_proyecto', $condicion, $valor);
+                            $proyectos = $this->filtros($proyectos, 'pp.alias_proyecto', $condicion, $valor);
                             break;
                     }
                 }
@@ -65,23 +81,29 @@ class GetAllProyectosController extends Controller
             $resultado = [];
             foreach ($proyectos as $proyecto) {
                 $pre_resultado = [];
-                $render = [];                
-                    $pre_resultado['data'][] = "".$proyecto->nombre_proyecto;
-                    $pre_resultado['data'][] = $proyecto->alias_proyecto;
-                    $pre_resultado['render']['color'] = null;
-                    $pre_resultado['render']['flag'] = false;
-                    $pre_resultado['render']['con_documentos'] = false;                    
-                    $pre_resultado['id'] = $proyecto->id;
+                $render = [];
+                $pre_resultado['data'][] = "".$proyecto->numero_proceso;
+                $pre_resultado['data'][] = "".$proyecto->anho_proceso;
+                $pre_resultado['data'][] = "".$proyecto->nombre_proceso;
+                $pre_resultado['data'][] = "".$proyecto->nombre_proyecto;
+                $pre_resultado['data'][] = $proyecto->alias_proyecto;
+                $pre_resultado['render']['color'] = null;
+                $pre_resultado['render']['flag'] = false;
+                $pre_resultado['render']['con_documentos'] = false;                    
+                $pre_resultado['id'] = $proyecto->id;
                 
                 array_push($resultado, $pre_resultado);
             }
 
             $rpta['cabecera'] = $cabecera = [
+                trans('texto.numero_proceso'),
+                trans('texto.anho_proceso'),
+                trans('texto.nombre_proceso'),
                 trans('texto.Proyecto'),
                 trans('texto.alias_proyecto')
             ];
 
-            $rpta['format'] = ['',''];
+            $rpta['format'] = ['','','','',''];
 
             $rpta['pagina']['current_page'] = $proyectos->currentPage();
             $rpta['pagina']['data'] = $resultado;

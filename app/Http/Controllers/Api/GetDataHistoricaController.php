@@ -47,7 +47,6 @@ class GetDataHistoricaController extends Controller
             $id_limite = $request->id_limite;
 
             $id_estaciones = [];
-            $id_grupo_estaciones = [];
 
             $id_parametros = [];
             $id_grupo_parametros = [];
@@ -93,14 +92,6 @@ class GetDataHistoricaController extends Controller
             ];
 
 
-            foreach ($estaciones as $estacion) {
-                if (substr($estacion, 0, 1) == "G") {
-                    array_push($id_grupo_estaciones, substr($estacion, 1));
-                } else {
-                    array_push($id_estaciones, substr($estacion, 1));
-                }
-            }
-
             foreach ($parametros as $parametro) {
                 if (substr($parametro, 0, 1) == "G") {
                     array_push($id_grupo_parametros, substr($parametro, 1));
@@ -109,28 +100,6 @@ class GetDataHistoricaController extends Controller
                 }
             }
 
-            
-
-            /*$sql_id_estaciones_grupo = DB::table('grupo_estaciones as ge')
-                                ->select(DB::raw(
-                                    "ege.id_estacion as id
-                                    "
-                                ))
-                                ->join('estacion_grupo_estaciones AS ege', 'ege.id_grupo_estacion', '=', 'ge.id')
-                                ->whereIn('ege.id_grupo_estacion', $id_grupo_estaciones);
-                
-            $sql_id_estaciones = DB::table('estaciones as e')
-                                ->select(DB::raw(
-                                    "e.id as id
-                                    "
-                                ))
-                                ->whereIn('id', $id_estaciones)
-                                ->union($sql_id_estaciones_grupo)
-                                ->get();*/
-
-            /*$sql_id_estaciones = json_decode(json_encode($sql_id_estaciones), true);*/
-            //$sql_id_estaciones = $sql_id_estaciones->toArray();
-            //return $sql_id_estaciones;
             $sql_id_parametros_grupo = DB::table('grupo_parametros as gp')
                                 ->select(DB::raw(
                                     "
@@ -156,7 +125,6 @@ class GetDataHistoricaController extends Controller
                                 ->distinct()
                                 ->get();
 
-            //$sql_id_parametros = json_decode(json_encode($sql_id_parametros), true);
             $id_parametros = [];
             $id_param = [];
             foreach ($sql_id_parametros as $valor) {
@@ -165,14 +133,13 @@ class GetDataHistoricaController extends Controller
                 array_push($id_param, $valor->id);
             }
 
-            //return $id_parametros;
-
-            /*$id_estaciones = [];
-            foreach ($sql_id_estaciones as $valor) {
-                $id_estaciones[] = $valor['id'];
-            }*/
-
             $resultado = [];
+
+            #Primero obtengo las estaciones
+            $id_estaciones = DB::table('estaciones as e')->select(DB::raw("e.id"))->whereIn('e.nombre_estacion', $estaciones)
+            ->orWhere(function ($query) use ($estaciones) {
+                $query->whereIn('e.alias_estacion', $estaciones);
+            })->distinct()->pluck('id')->toArray();
 
             //OBTENGO LA MINIMA FECHA CADASTRADA
             $sql_fecha_muestreo = DB::table('muestras as m')
@@ -185,15 +152,7 @@ class GetDataHistoricaController extends Controller
                                 ->whereIn('m.id_estado', [3,4])
                                 ->where('m.activo', '=', 'S')
                                 ->where('m.id_tipo_muestra', '=', $id_tipo_muestra)
-                                //->whereIn('e.id', $id_estaciones)
-                                /*->whereIn('e.nombre_estacion',$estaciones)
-                                ->orWhere(function ($query) use ($estaciones) {
-                                    $query->whereIn('e.alias_estacion', $estaciones);
-                                })*/
-                                ->where(function ($query) use ($estaciones) {
-                                    $query->whereIn('e.nombre_estacion', $estaciones)
-                                          ->orWhereIn('e.alias_estacion', $estaciones);
-                                })
+                                ->whereIn('e.id',$id_estaciones)
                                 ->whereIn('mp.id_parametro', $id_param)
                                 ->orderBy('m.fecha_muestreo', 'ASC')
                                 ->first();
@@ -216,6 +175,7 @@ class GetDataHistoricaController extends Controller
                                     else e.alias_estacion end as estacion
                                     '
                                 ))
+                                ->leftjoin('proceso_muestras AS pm', 'pm.id_muestra','=','m.id')
                                 ->leftJoin('proyectos as pr','pr.id','=','m.id_proyecto')
                                 ->leftjoin('muestra_parametros as mp', 'mp.id_muestra', '=', 'm.id')
                                 ->leftjoin('metodos as me', 'me.id', '=', 'mp.id_metodo')
@@ -232,36 +192,25 @@ class GetDataHistoricaController extends Controller
                                 ->whereIn('m.id_estado', [3,4])
                                 ->where('m.activo', '=', 'S')
                                 ->where('m.id_tipo_muestra', '=', $id_tipo_muestra)
-                                //->whereIn('e.id', $id_estaciones)
-                                ->where(function ($query) use ($estaciones) {
-                                    $query->whereIn('e.nombre_estacion', $estaciones)
-                                          ->orWhereIn('e.alias_estacion', $estaciones);
-                                })
+                                ->whereIn('e.id',$id_estaciones)
                                 ->whereIn('mp.id_parametro', $parametro['id'])
                                 ->distinct()
                                 ->orderBy('m.fecha_muestreo', 'ASC');
                 
                 if ($id_proyecto) {
-                    foreach ($id_proyecto as $key => $value) {
-                        $id_proyecto[$key] = $value;
-                    }
+                    $sql_procesos = DB::table('proceso_proyectos as pp')->select(DB::raw("pp.id_proceso"))->whereIn('pp.nombre_proyecto', $id_proyecto)
+                    ->orWhere(function ($query) use ($id_proyecto) {
+                        $query->whereIn('pp.alias_proyecto', $id_proyecto);
+                    })->distinct()->pluck('id_proceso')->toArray();
 
-                    $sql_data_historica = $sql_data_historica->where(function ($query) use ($id_proyecto) {
-                        $query->whereIn('pr.nombre_proyecto', $id_proyecto)
-                              ->orWhereIn('pr.alias_proyecto', $id_proyecto);
-                    });
+                    $sql_data_historica = $sql_data_historica->whereIn('pm.id_proceso', $sql_procesos);
                 }
 
                 $sql_data_historica = $sql_data_historica->get();
                 
                 $contador = 1;
-                //return $sql_data_historica->dd();
+                $pre_pre_resultado = [];
                 foreach ($sql_data_historica as $data_historica) {
-                    /*if ($contador == 1) {
-                        $fecha_inicio = $data_historica->date;
-                        $contador++;
-                    }*/
-                    
                     $pre_resultado['titulo'] = $data_historica->nombre_parametro;
                     $pre_resultado['ejex'] = 'Fecha Muestreo';
                     $pre_resultado['ejey'] = $data_historica->unidad;
@@ -282,8 +231,7 @@ class GetDataHistoricaController extends Controller
                     }
                     
                     $pre_pre_resultado[$data_historica->estacion]['nombre'] = $data_historica->estacion;
-                    //$pre[$data_historica->estacion]['data'] = $data_historica->estacion;
-                    //$pre_pre_resultado[$data_historica->estacion]['data'][] = $pre_pre;
+                    $fecha_fin = $data_historica->date;
                 }
 
                 $start = $month = strtotime($fecha_inicio);
@@ -292,9 +240,7 @@ class GetDataHistoricaController extends Controller
                     $label[] = date('d-m-Y', $month);
                     $month = strtotime("+1 day", $month);
                 }
-                //dd($pre_pre_resultado);
                 $bresultado = [];
-                //print_r($pre_pre_resultado);
                 $datos = [];
                 foreach ($pre_pre_resultado as $value) {
                     //separa por estaciones
@@ -307,14 +253,12 @@ class GetDataHistoricaController extends Controller
                     }
                     $value['datos'] = $datos;
                     $value['nombre'] = $value['nombre'];
-                    //dd($value);
                     $rpta['nombre'] = $value['nombre'];
                     $rpta['datos'] = $datos;
                     $rpta['color'] = $colors[random_int(0, 247)];
                     $rpta['showSymbol'] = true;
                     array_push($bresultado, $rpta);
                     $datos = [];
-                    //dd($value);
                 }
 
                 if ($id_limite != null) {
@@ -371,14 +315,11 @@ class GetDataHistoricaController extends Controller
                 $pre_resultado = [];
             }
 
-            //$resultado['label'] = $label;
             $respuesta['dates'] = $label;
             $respuesta['graficas'] = $resultado;
             
             
             return $respuesta;
-            /*$data_historica = DB::table('muestras m')
-                            ->leftjoin('muestra_parametros mp', 'mp.id_muestra', '=', 'm.id');*/
         } catch (Throwable $e) {
             report($e);
             return response()->json(['message' => $e->getMessage()], 400);

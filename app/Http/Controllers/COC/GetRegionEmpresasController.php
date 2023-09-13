@@ -1,14 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\COC;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
-use Throwable;
-
-class SetAliasProyectosController extends Controller
+class GetRegionEmpresasController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -28,25 +26,9 @@ class SetAliasProyectosController extends Controller
      */
     public function store(Request $request)
     {
-        try {
-            $id = $request->id;
-            $alias = $request->alias;
-            if ($alias == "") {
-                $alias = null;
-            }
-
-            //actualizamos los alias 
-            DB::table('proceso_proyectos')->whereIn('id', $id)->update(['alias_proyecto' => $alias]);
-
-            $rpta["estado"] = "ok";
-            $rpta["mensaje"] = "Se asigno el alias correctamente";
-
-        } catch (Throwable $e) {
-            $rpta["estado"] = "error";
-            $rpta["mensaje"] = $e->getMessage();
-        }
-        
-        return $rpta;
+        $id_pais = $request->id_pais;
+        $empresas = DB::table("cadenas")->select('id_empresa','nombre_empresa')->distinct()->where('id_pais',$id_pais)->get();
+        return response()->json($empresas);
     }
 
     /**

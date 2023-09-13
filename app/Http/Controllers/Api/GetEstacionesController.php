@@ -29,7 +29,6 @@ class GetEstacionesController extends Controller
     public function store(Request $request)
     {
         try {
-            //$id_empresa_sol = $request->user()->id_empresa;
             $usuario = $request->user();
 
             $id_tipo_muestra = str_replace("TA", "", $request->id_tipo_muestra);
@@ -42,9 +41,6 @@ class GetEstacionesController extends Controller
             if ($fuera_limite) {
                 $sql_estaciones = DB::table('muestras as m')
                         ->select(DB::raw(
-                            /*"case when ge.grupo_estacion is null then CONCAT('E',e.id) else CONCAT('G',ge.id) end as id,
-                            case when ge.grupo_estacion is null then e.nombre_estacion else ge.grupo_estacion end as nombre_estacion
-                            "*/
                             "
                             case when e.alias_estacion is null then e.nombre_estacion else e.alias_estacion end as id,
                             case when e.alias_estacion is null then e.nombre_estacion else e.alias_estacion end as nombre_estacion
@@ -52,9 +48,7 @@ class GetEstacionesController extends Controller
                         ))
                         ->join('muestra_parametros AS mp', 'mp.id_muestra', '=', 'm.id')
                         ->leftjoin('estaciones AS e', 'm.id_estacion', '=', 'e.id')
-                        /*->leftjoin('estacion_grupo_estaciones AS ege', 'ege.id_estacion', '=', 'e.id')
-                        ->leftjoin('grupo_estaciones AS ge', 'ge.id', '=', 'ege.id_grupo_estacion')*/
-                        ->leftjoin('proyectos AS p', 'p.id', '=', 'm.id_proyecto')
+                        ->leftjoin('proceso_muestras AS pm', 'pm.id_muestra','=','m.id')
                         ->leftjoin('tipo_muestras AS tm', 'tm.id', '=', 'm.id_tipo_muestra')
                         ->where('mp.id_parecer', '=', 3)
                         ->where('m.fecha_muestreo', '>', $fecha_inicio)
@@ -63,22 +57,16 @@ class GetEstacionesController extends Controller
                         ->where('m.activo', '=', 'S')
                         ->where('tm.activo', '=', 'S')
                         ->distinct('id')->orderBy('nombre_estacion');
-            //->get();
             } else {
                 $sql_estaciones = DB::table('muestras as m')
                         ->select(DB::raw(
-                            /*"case when ge.grupo_estacion is null then CONCAT('E',e.id) else CONCAT('G',ge.id) end as id,
-                            case when ge.grupo_estacion is null then e.nombre_estacion else ge.grupo_estacion end as nombre_estacion
-                            "*/
                             "
                             case when e.alias_estacion is null then e.nombre_estacion else e.alias_estacion end as id,
                             case when e.alias_estacion is null then e.nombre_estacion else e.alias_estacion end as nombre_estacion
                             "
                         ))
                         ->leftjoin('estaciones AS e', 'm.id_estacion', '=', 'e.id')
-                        /*->leftjoin('estacion_grupo_estaciones AS ege', 'ege.id_estacion', '=', 'e.id')
-                        ->leftjoin('grupo_estaciones AS ge', 'ge.id', '=', 'ege.id_grupo_estacion')*/
-                        ->leftjoin('proyectos AS p', 'p.id', '=', 'm.id_proyecto')
+                        ->leftjoin('proceso_muestras AS pm', 'pm.id_muestra','=','m.id')
                         ->leftjoin('tipo_muestras AS tm', 'tm.id', '=', 'm.id_tipo_muestra')
                         ->whereIn('m.id_estado', [3,4])
                         ->where('m.id_tipo_muestra', '=', $id_tipo_muestra)
@@ -87,22 +75,20 @@ class GetEstacionesController extends Controller
                         ->distinct('id')->orderBy('nombre_estacion');
             }
 
-            $sql_estaciones = filtroMuestrasQuery($sql_estaciones,$usuario);
-
             if ($id_proyecto) {
                 $analytic_click = new ClickBotones;
                 $analytic_click->id_user = $usuario->id;
                 $analytic_click->id_boton = 20;
                 $analytic_click->save();
-                /*foreach ($id_proyecto as $key => $value) {
-                    $id_proyecto[$key] = str_replace("P", "", $value);
-                }*/
-                
-                $sql_estaciones = $sql_estaciones->whereIn('p.nombre_proyecto', $id_proyecto)
-                                                ->orWhere(function ($query) use ($id_proyecto) {
-                                                    $query->whereIn('p.alias_proyecto', $id_proyecto);
-                                                });
+                $sql_procesos = DB::table('proceso_proyectos as pp')->select(DB::raw("pp.id_proceso"))->whereIn('pp.nombre_proyecto', $id_proyecto)
+                ->orWhere(function ($query) use ($id_proyecto) {
+                    $query->whereIn('pp.alias_proyecto', $id_proyecto);
+                })->distinct()->pluck('id_proceso')->toArray();
+
+                $sql_estaciones = $sql_estaciones->whereIn('pm.id_proceso', $sql_procesos);
             }
+
+            $sql_estaciones = filtroMuestrasQuery($sql_estaciones,$usuario);
 
             $sql_estaciones = $sql_estaciones->get();
         } catch (Throwable $e) {

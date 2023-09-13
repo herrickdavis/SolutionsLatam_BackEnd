@@ -8,7 +8,6 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
-use GuzzleHttp\Client;
 
 class GetDataCOCController extends Controller
 {
@@ -32,10 +31,14 @@ class GetDataCOCController extends Controller
     {
         $filtros = $request->filtros;
 
-        $id_cadena = 1;
-
         //Terminamos de leer datos
-        $cadenas = DB::table("cadenas as c");
+        $id_pais = $request->id_pais;
+        $id_empresas = $request->id_empresas;
+        if($id_pais != null && $id_empresas != null) {
+            $cadenas = DB::table("cadenas as c")->where('id_pais',$id_pais)->whereIn('id_empresa',$id_empresas);
+        } else {
+            $cadenas = DB::table("cadenas as c")->whereIn('id_empresa',[1]);
+        }
 
         if ($filtros != null) {
             foreach ($filtros as $filtro) {
@@ -44,14 +47,23 @@ class GetDataCOCController extends Controller
                 $valor = $filtro['valor'];
                 
                 switch ($pre_cabecera) {
+                    case strtolower(trans('texto.codigo_muestra')):
+                        $cadenas = $this->filtros($cadenas, 'c.codigo_laboratorio', $condicion, $valor);
+                        break;
+                    case strtolower(trans('texto.numero_grupo')):
+                        $cadenas = $this->filtros($cadenas, 'c.numero_grupo', $condicion, $valor);
+                        break;
+                    case strtolower(trans('texto.numero_proceso')):
+                        $cadenas = $this->filtros($cadenas, 'c.numero_proceso', $condicion, $valor);
+                        break;
                     case mb_strtolower(trans('texto.Estacion'), 'UTF-8'):
-                        $estaciones = $this->filtros($cadenas, 'e.nombre_estacion', $condicion, $valor);
+                        $cadenas = $this->filtros($cadenas, 'c.estacion', $condicion, $valor);
                         break;
                     case strtolower(trans('texto.Fecha_Muestreo')):
-                        $estaciones = $this->filtros($cadenas, 'ge.grupo_estacion', $condicion, $valor);
+                        $cadenas = $this->filtros($cadenas, 'c.fecha_muestreo', $condicion, $valor);
                         break;
-                    case strtolower(trans('texto.Matriz')):
-                        $estaciones = $this->filtros($cadenas, 'p.nombre_proyecto', $condicion, $valor);
+                    case strtolower(trans('texto.Tipo_Muestra')):
+                        $cadenas = $this->filtros($cadenas, 'c.tipo_muestra', $condicion, $valor);
                         break;
                 }
             }
@@ -72,14 +84,14 @@ class GetDataCOCController extends Controller
             $pre_resultado['render']['color'] = null;
             $pre_resultado['render']['flag'] = false;
             $pre_resultado['render']['con_documentos'] = false;
-            $pre_resultado['id'] = $cadena->id;
+            $pre_resultado['id'] = intval($cadena->codigo_laboratorio);
 
             array_push($resultado, $pre_resultado);
         }
         $rpta['cabecera'] = $cabecera = [
             trans('texto.codigo_muestra'),
             trans('texto.numero_grupo'),
-            trans('texto.Numero_Proceso'),
+            trans('texto.numero_proceso'),
             trans('texto.Estacion'),
             trans('texto.Fecha_Muestreo'),
             trans('texto.Tipo_Muestra'),
@@ -100,7 +112,7 @@ class GetDataCOCController extends Controller
         $rpta['pagina']['to'] = $cadenas->lastItem();
         $rpta['pagina']['total'] = $cadenas->total();
 
-        return $rpta; //['muestras']['next_page_url'];
+        return $rpta;
     }
 
     public function paginate($items, $perPage = 20, $page = null, $options = [])

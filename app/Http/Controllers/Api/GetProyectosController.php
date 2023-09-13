@@ -40,16 +40,12 @@ class GetProyectosController extends Controller
 
             $sql_proyectos = DB::table('muestras as m')
                         ->select(DB::raw(
-                            /*"case when gp.grupo_proyecto is null then CONCAT('P',p.id) else CONCAT('G',gp.id) end as id,
-                            case when gp.grupo_proyecto is null then p.nombre_proyecto else gp.grupo_proyecto end as nombre_proyecto
-                            "*/
-                            "case when p.alias_proyecto is null then p.nombre_proyecto else p.alias_proyecto end as id,
-                            case when p.alias_proyecto is null then p.nombre_proyecto else p.alias_proyecto end as nombre_proyecto
+                            "case when pp.alias_proyecto is null then pp.nombre_proyecto else pp.alias_proyecto end as id,
+                            case when pp.alias_proyecto is null then pp.nombre_proyecto else pp.alias_proyecto end as nombre_proyecto
                             "
                         ))
-                        ->leftjoin('proyectos AS p', 'm.id_proyecto', '=', 'p.id')
-                        //->leftjoin('proyecto_grupo_proyectos AS pgp', 'pgp.id_proyecto', '=', 'p.id')
-                        //->leftjoin('grupo_proyectos AS gp', 'gp.id', '=', 'pgp.id_grupo_proyecto')
+                        ->leftjoin('proceso_muestras AS pm','pm.id_muestra','=','m.id')
+                        ->leftjoin('proceso_proyectos AS pp', 'pp.id_proceso', '=', 'pm.id_proceso')
                         ->where('m.id_tipo_muestra', '=', $id_tipo_muestra)
                         ->whereIn('m.id_estado', [3,4])
                         ->where('m.activo', '=', 'S')
