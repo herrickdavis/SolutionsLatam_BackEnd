@@ -76,7 +76,7 @@ class GetLoginController extends Controller
                     ->orderBy('mx.nombre_matriz', 'ASC')->distinct();
                 $query = filtroMuestrasQuery($query,$user);
                 $sql_matrices = $query->get();
-                Cache::put($cacheKey, $sql_matrices, 21600);
+                Cache::put($cacheKey, $sql_matrices, 604800);
             }
 
             $usuario['menu'] = $sql_matrices;

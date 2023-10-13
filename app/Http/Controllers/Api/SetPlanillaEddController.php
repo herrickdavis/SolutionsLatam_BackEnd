@@ -1,15 +1,17 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Edd;
 use App\Models\EddCampos;
+use Illuminate\Support\Facades\Log;
+
 use Throwable;
 
-class SetEddController extends Controller
+class SetPlanillaEddController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -29,34 +31,35 @@ class SetEddController extends Controller
      */
     public function store(Request $request)
     {
-        $user_id = $request->user_id;
-        $nombre_reporte = $request->nombre_reporte;
-        $es_publico = $request->es_publico;
-        $activo = $request->activo;
-        $edd_campos = $request->campos;
+        try {
+            $user_id = 1;
+            $nombre_reporte = $request->nombre_reporte;
+            $configuracion = $request->configuracion;
+            $es_publico = 'S';
+            $activo = 'S';
+            Log::info($request->id);
 
-        DB::beginTransaction();
-        $reporte = new Edd();
-        $reporte->user_id = $user_id;
-        $reporte->nombre_reporte = $nombre_reporte;
-        $reporte->es_publico = $es_publico;
-        $reporte->activo = $activo;
-        $reporte->save();
+            if($request->id != 0) {
+                $reporte = Edd::find($request->id);
+            } else {
+                $reporte = new Edd();
+            }
+            $reporte->user_id = $user_id;
+            $reporte->nombre_reporte = $nombre_reporte;
+            $reporte->configuracion = json_encode($configuracion, true);
+            $reporte->es_publico = $es_publico;
+            $reporte->activo = $activo;
+            $reporte->save();
 
-        foreach ($edd_campos as $value) {
-            $campos = new EddCampos();
-            $campos->id_edd = $reporte->id;
-            $campos->nombre_tabla = $value["tabla"];
-            $campos->nombre_campo = $value["campo"];
-            $campos->nombre_mostrar = $value["nombre_mostrar"];
-            $campos->orden_campo = $value["posicion"];
-            $campos->activo = $value["activo"];
-            $campos->save();
+            $rpta["success"] = "Ok";
+            $rpta["mensaje"] = "Ok";
+        } catch (\Throwable $e) {
+            report($e);
+            $rpta["error"] = "error";
+            $rpta["mensaje"] = $e->getMessage();
         }
-        
 
-        DB::commit();
-
+        return response()->json($rpta);
     }
 
     /**

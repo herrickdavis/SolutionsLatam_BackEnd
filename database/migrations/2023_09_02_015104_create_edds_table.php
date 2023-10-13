@@ -17,6 +17,7 @@ class CreateEddsTable extends Migration
             $table->id();
             $table->foreignId('user_id');
             $table->string('nombre_reporte',100);
+            $table->json('configuracion',100);
             $table->enum('es_publico', ['S', 'N'])->default('N');
             $table->enum('activo',['S','N'])->default('S');
             $table->timestamps();

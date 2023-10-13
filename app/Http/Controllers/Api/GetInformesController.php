@@ -54,49 +54,15 @@ class GetInformesController extends Controller
 
         if ($filtros != null) {
             foreach ($filtros as $filtro) {
-                //var_dump($filtro);
                 $pre_cabecera = $filtro['cabecera'];
                 $condicion = $filtro['condicion'];
                 $valor = $filtro['valor'];
                 switch ($pre_cabecera) {
-                    case strtolower(trans('texto.codigo_muestra')):
-                        $sql_informes = $this->filtros($sql_informes, 'm.id', $condicion, $valor);
+                    case strtolower(trans('texto.numero')):
+                        $sql_informes = $this->filtros($sql_informes, 'c.identificacion_certificado', $condicion, $valor);
                         break;
-                    case strtolower(trans('texto.numero_grupo')):
-                        $sql_informes = $this->filtros($sql_informes, 'm.numero_grupo', $condicion, $valor);
-                        break;
-                    case strtolower(trans('texto.numero_muestra')):
-                        $sql_informes = $this->filtros($sql_informes, 'm.numero_muestra', $condicion, $valor);
-                        break;
-                    case strtolower(trans('texto.Estado')):
-                        if ($valor == "recibida") {
-                            $valor = 1;
-                        } elseif ($valor == "en proceso") {
-                            $valor = 2;
-                        } elseif ($valor == "finalizada") {
-                            $valor = 3;
-                        } elseif ($valor == "Con Informe") {
-                            $valor = 4;
-                        }
-                        $sql_informes = $this->filtros($sql_informes, 'm.id_estado', $condicion, $valor);
-                        break;
-                    case strtolower(trans('texto.Proyecto')):
-                        $sql_informes = $this->filtros($sql_informes, 'p.nombre_proyecto', $condicion, $valor);
-                        break;
-                    case strtolower(trans('texto.Estacion')):
-                        $sql_informes = $this->filtros($sql_informes, 'e.nombre_estacion', $condicion, $valor);
-                        break;
-                    case strtolower(trans('texto.Tipo_Muestra')):
-                        $sql_informes = $this->filtros($sql_informes, 'ta.nombre_tipo_muestra', $condicion, $valor);
-                        break;
-                    case strtolower(trans('texto.Solicitante')):
-                        $sql_informes = $this->filtros($sql_informes, 'esol.nombre_empresa', $condicion, $valor);
-                        break;
-                    case strtolower(trans('texto.Contratante')):
-                        $sql_informes = $this->filtros($sql_informes, 'econ.nombre_empresa', $condicion, $valor);
-                        break;
-                    case strtolower(trans('texto.Fecha_Muestreo')):
-                        $sql_informes = $this->filtros($sql_informes, 'm.fecha_muestreo', $condicion, $valor);
+                    case strtolower(trans('texto.titulo_informe')):
+                        $sql_informes = $this->filtros($sql_informes, 'c.titulo_certificado', $condicion, $valor);
                         break;
                     default:
                         # code...

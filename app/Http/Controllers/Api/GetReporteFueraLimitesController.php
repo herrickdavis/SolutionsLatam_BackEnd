@@ -41,7 +41,7 @@ class GetReporteFueraLimitesController extends Controller
         $id_tipo_muestra = str_replace("TA", "", $request->id_tipo_muestra);
         $estaciones = $request->id_estaciones;
 
-        $id_estaciones = [];
+        /*$id_estaciones = [];
         $id_grupo_estaciones = [];
         foreach ($estaciones as $estacion) {
             if (substr($estacion, 0, 1) == "G") {
@@ -49,7 +49,7 @@ class GetReporteFueraLimitesController extends Controller
             } else {
                 array_push($id_estaciones, substr($estacion, 1));
             }
-        }
+        }*/
 
         try {
             $sql_fuera_limites = DB::table('muestras as m')
@@ -82,7 +82,7 @@ class GetReporteFueraLimitesController extends Controller
                             //->where('m.id_empresa_sol', '=', $id_empresa_sol)
                             ->where('m.id_tipo_muestra', '=', $id_tipo_muestra)
                             ->where('m.activo', '=', 'S')
-                            ->whereIn('m.id_estacion', $id_estaciones)
+                            ->whereIn('e.nombre_estacion', $estaciones)
                             ->where('mp.id_parecer', '=', 3);
                         
             $sql_fuera_limites = filtroMuestrasQuery($sql_fuera_limites,$usuario);

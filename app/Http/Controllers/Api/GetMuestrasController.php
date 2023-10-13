@@ -128,7 +128,7 @@ class GetMuestrasController extends Controller
                         $analytic_click->save();
                         $muestras = $this->filtros($muestras, 'p.nombre_proyecto', $condicion, $valor);
                         break;
-                    case strtolower(trans('texto.Estacion')):
+                    case mb_strtolower(trans('texto.Estacion'), 'UTF-8'):
                         $analytic_click = new ClickBotones;
                         $analytic_click->id_user = $usuario->id;
                         $analytic_click->id_boton = 5;

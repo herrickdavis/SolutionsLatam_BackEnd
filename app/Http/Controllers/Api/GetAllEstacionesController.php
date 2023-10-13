@@ -54,15 +54,13 @@ class GetAllEstacionesController extends Controller
                 foreach ($filtros as $filtro) {                
                     $pre_cabecera = $filtro['cabecera'];
                     $condicion = $filtro['condicion'];
-                    $valor = $filtro['valor']; 
-                    \Log::info('Showing the user profile for user: '.$pre_cabecera.' '.mb_strtolower(trans('texto.Estacion'), 'UTF-8'));               
+                    $valor = $filtro['valor'];
                     switch ($pre_cabecera) {
                         case mb_strtolower(trans('texto.Estacion'), 'UTF-8'):
-                            \Log::info("Filtramos");
                             $estaciones = $this->filtros($estaciones, 'e.nombre_estacion', $condicion, $valor);
                             break;
-                        case strtolower(trans('texto.alias_estacion')):
-                            $estaciones = $this->filtros($estaciones, 'ge.grupo_estacion', $condicion, $valor);
+                        case mb_strtolower(trans('texto.alias_estacion'), 'UTF-8'):
+                            $estaciones = $this->filtros($estaciones, 'e.alias_estacion', $condicion, $valor);
                             break;
                         case strtolower(trans('texto.Proyecto')):
                             $estaciones = $this->filtros($estaciones, 'p.nombre_proyecto', $condicion, $valor);

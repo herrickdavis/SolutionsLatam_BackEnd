@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\ClickBotones;
+use Illuminate\Support\Facades\Storage;
 use Throwable;
 use ZipArchive;
 use File;
@@ -34,7 +35,6 @@ class GetZipMuestraController extends Controller
 
         $id_muestra = $request->id_muestra;
         $tipo_archivo = $request->id_tipo_archivo;
-
         $analytic_click = new ClickBotones;
         $analytic_click->id_user = $usuario->id;
         $analytic_click->id_boton = 18;
@@ -124,11 +124,12 @@ class GetZipMuestraController extends Controller
             }
             
             if ($zip->open(storage_path('app/public/'.$fileName), ZipArchive::CREATE)== true) {
-                $files = File::files(storage_path('app/public'));
+                //$files = File::files(storage_path('app/public'));
                 foreach ($sql_documentos as $documento) {
                     //$relativeName = basename($documento->ruta);
                     $relativeName = $documento->nombre_documento;
-                    $zip->addFile(storage_path('app/'.$documento->ruta), $relativeName);
+                    $fileContent = Storage::disk('s3')->get($documento->ruta);
+                    $zip->addFromString($relativeName, $fileContent);
                 }
                 if (count($sql_documentos) == 0) {
                     $zip->addEmptyDir("vacio");

@@ -76,9 +76,9 @@ use App\Http\Controllers\ApiClientes\MuestrasController;
 // Extras
 use App\Http\Controllers\Extras\UpdateEmpresaMuestraController;
 //EDD
-use App\Http\Controllers\Api\SetEddController;
-use App\Http\Controllers\Api\GetEddController;
-
+use App\Http\Controllers\Api\SetPlanillaEddController;
+use App\Http\Controllers\Api\GetPlanillasEddController;
+use App\Http\Controllers\Api\GetDocumentoEddController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -171,8 +171,9 @@ Route::middleware('auth:sanctum')->apiResource('GetAllProyectos', GetAllProyecto
 Route::middleware('auth:sanctum')->apiResource('SetAliasProyectos', SetAliasProyectosController::class);
 
 //EDD
-Route::apiResource('SetEdd', SetEddController::class);
-Route::apiResource('GetEdd', GetEddController::class);
+Route::apiResource('SetPlanillaEdd', SetPlanillaEddController::class);
+Route::apiResource('GetPlanillaEdd', GetPlanillasEddController::class);
+Route::middleware('auth:sanctum')->apiResource('GetDocumentoEdd', GetDocumentoEddController::class);
 
 
 //Route::middleware('auth:sanctum')->apiResource('GetCambiarPassword', GetCambiarPasswordController::class);

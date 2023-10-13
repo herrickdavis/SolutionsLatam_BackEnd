@@ -36,12 +36,11 @@ class GetTipoMuestraController extends Controller
             $fecha_fin = $request->fecha_fin;
             $id_matriz = $request->id_matriz;
 
-            if ($fuera_limite == true) {
+            if ($fuera_limite) {
                 $analytic_click = new ClickBotones;
                 $analytic_click->id_user = $usuario->id;
                 $analytic_click->id_boton = 24;
                 $analytic_click->save();
-
                 $sql_tipo_muestra = DB::table('muestras as m')
                             ->select(DB::raw(
                                 "CONCAT('TA',tm.id) as id,

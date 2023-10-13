@@ -45,19 +45,10 @@ class GetDataHistoricaExcelController extends Controller
             $parametros = $request->parametros;
             $id_proyecto = $request->id_proyecto;
 
-            $id_estaciones = [];
             $id_grupo_estaciones = [];
 
             $id_parametros = [];
             $id_grupo_parametros = [];
-
-            foreach ($estaciones as $estacion) {
-                if (substr($estacion, 0, 1) == "G") {
-                    array_push($id_grupo_estaciones, substr($estacion, 1));
-                } else {
-                    array_push($id_estaciones, substr($estacion, 1));
-                }
-            }
 
             foreach ($parametros as $parametro) {
                 if (substr($parametro, 0, 1) == "G") {
@@ -75,18 +66,6 @@ class GetDataHistoricaExcelController extends Controller
                                 ->join('estacion_grupo_estaciones AS ege', 'ege.id_grupo_estacion', '=', 'ge.id')
                                 ->whereIn('ege.id_grupo_estacion', $id_grupo_estaciones);
                 
-            $sql_id_estaciones = DB::table('estaciones as e')
-                                ->select(DB::raw(
-                                    "e.id as id
-                                    "
-                                ))
-                                ->whereIn('id', $id_estaciones)
-                                ->union($sql_id_estaciones_grupo)
-                                ->get();
-
-            $sql_id_estaciones = json_decode(json_encode($sql_id_estaciones), true);
-            //$sql_id_estaciones = $sql_id_estaciones->toArray();
-            //return $sql_id_estaciones;
             $sql_id_parametros_grupo = DB::table('grupo_parametros as gp')
                                 ->select(DB::raw(
                                     "
@@ -112,18 +91,10 @@ class GetDataHistoricaExcelController extends Controller
                                 ->distinct()
                                 ->get();
 
-            //$sql_id_parametros = json_decode(json_encode($sql_id_parametros), true);
             $id_parametros = [];
             foreach ($sql_id_parametros as $valor) {
                 $id_parametros[$valor->nombre_parametro]['nombre'] = $valor->nombre_parametro;
                 $id_parametros[$valor->nombre_parametro]['id'][] = $valor->id;
-            }
-
-            //return $id_parametros;
-
-            $id_estaciones = [];
-            foreach ($sql_id_estaciones as $valor) {
-                $id_estaciones[] = $valor['id'];
             }
 
             $resultado = [];
@@ -160,7 +131,7 @@ class GetDataHistoricaExcelController extends Controller
                                 ->whereIn('m.id_estado', [3,4])
                                 ->where('m.activo', '=', 'S')
                                 ->where('m.id_tipo_muestra', '=', $id_tipo_muestra)
-                                ->whereIn('e.id', $id_estaciones)
+                                ->whereIn('e.nombre_estacion', $estaciones)
                                 ->whereIn('mp.id_parametro', $parametro['id'])
                                 ->distinct()
                                 ->orderBy('m.fecha_muestreo', 'ASC');

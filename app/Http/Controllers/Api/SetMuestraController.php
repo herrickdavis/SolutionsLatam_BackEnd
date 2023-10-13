@@ -518,7 +518,12 @@ class SetMuestraController extends Controller
 
                 if ($historico == "S") {
                     if ($id_limite != null) {
-                        LimiteParametros::insertOrIgnore($limite_parametros);
+                        LimiteParametros::upsert(
+                            $limite_parametros,
+                            ['id_limite', 'id_parametro'],
+                            ['maximo', 'minimo']
+                        );
+                        
                     }
 
                     $parametros3 = [];
@@ -566,7 +571,16 @@ class SetMuestraController extends Controller
                         }
 
 
-
+                        if($id_estado == 3 or $id_estado == 4) {
+                            if (is_null($parametro['valor']) || trim($parametro['valor']) === "") {
+                                //Eliminados el parametro en caso llegue nulo siendo la muestra finalizada o con informe
+                                MuestraParametros::where('id_muestra', $id_muestra)
+                                                    ->where('id_parametro', $parametro['id_parametro'])
+                                                    ->delete();
+                                continue;
+                            }
+                        } 
+                        
                         $sql_parametro = MuestraParametros::updateOrCreate(
                             ['id_muestra' => $id_muestra, 'id_parametro' => $parametro['id_parametro']],
                             [
@@ -574,7 +588,7 @@ class SetMuestraController extends Controller
                             'valor' => $parametro['valor'],
                             'id_unidad' => $id_unidad,
                             'id_parecer' => $parametro['id_parecer']
-                        ]
+                            ]
                         );
                     }
                 }
