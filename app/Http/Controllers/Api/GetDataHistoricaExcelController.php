@@ -45,8 +45,6 @@ class GetDataHistoricaExcelController extends Controller
             $parametros = $request->parametros;
             $id_proyecto = $request->id_proyecto;
 
-            $id_grupo_estaciones = [];
-
             $id_parametros = [];
             $id_grupo_parametros = [];
 
@@ -57,14 +55,6 @@ class GetDataHistoricaExcelController extends Controller
                     array_push($id_parametros, substr($parametro, 1));
                 }
             }
-
-            $sql_id_estaciones_grupo = DB::table('grupo_estaciones as ge')
-                                ->select(DB::raw(
-                                    "ege.id_estacion as id
-                                    "
-                                ))
-                                ->join('estacion_grupo_estaciones AS ege', 'ege.id_grupo_estacion', '=', 'ge.id')
-                                ->whereIn('ege.id_grupo_estacion', $id_grupo_estaciones);
                 
             $sql_id_parametros_grupo = DB::table('grupo_parametros as gp')
                                 ->select(DB::raw(
@@ -98,6 +88,12 @@ class GetDataHistoricaExcelController extends Controller
             }
 
             $resultado = [];
+
+            #Primero obtengo las estaciones
+            $id_estaciones = DB::table('estaciones as e')->select(DB::raw("e.id"))->whereIn('e.nombre_estacion', $estaciones)
+            ->orWhere(function ($query) use ($estaciones) {
+                $query->whereIn('e.alias_estacion', $estaciones);
+            })->distinct()->pluck('id')->toArray();
             
             foreach ($id_parametros as $parametro) {
                 $label = [];
@@ -131,16 +127,17 @@ class GetDataHistoricaExcelController extends Controller
                                 ->whereIn('m.id_estado', [3,4])
                                 ->where('m.activo', '=', 'S')
                                 ->where('m.id_tipo_muestra', '=', $id_tipo_muestra)
-                                ->whereIn('e.nombre_estacion', $estaciones)
+                                ->whereIn('e.id', $id_estaciones)
                                 ->whereIn('mp.id_parametro', $parametro['id'])
                                 ->distinct()
                                 ->orderBy('m.fecha_muestreo', 'ASC');
                 if ($id_proyecto) {
-                    foreach ($id_proyecto as $key => $value) {
-                        $id_proyecto[$key] = str_replace("P", "", $value);
-                    }
+                    $sql_procesos = DB::table('proceso_proyectos as pp')->select(DB::raw("pp.id_proceso"))->whereIn('pp.nombre_proyecto', $id_proyecto)
+                    ->orWhere(function ($query) use ($id_proyecto) {
+                        $query->whereIn('pp.alias_proyecto', $id_proyecto);
+                    })->distinct()->pluck('id_proceso')->toArray();
 
-                    $sql_data_historica = $sql_data_historica->whereIn('m.id_proyecto', $id_proyecto);
+                    $sql_data_historica = $sql_data_historica->whereIn('pm.id_proceso', $sql_procesos);
                 }
 
                 $sql_data_historica = $sql_data_historica->get();

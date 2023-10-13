@@ -163,8 +163,6 @@ class GetDocumentoEddController extends Controller
                 // Agrega otros parámetros según tus necesidades
             ];
 
-            \Log::info($jsonParams);
-
             $response = $client->post($url, [
                 'headers' => $headers,
                 'json' => $jsonParams,
