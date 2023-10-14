@@ -33,7 +33,6 @@ class CadenaCustodiaExport
         $parametros_laboratorio = $this->parametros_laboratorio;
         $parametros_in_situ = $this->parametros_in_situ;
         // Itera sobre las celdas y realiza las modificaciones
-        //\Log::info($highestColumn."\n");
         $contador_laboratorio = 0;
         $contador_insitu = 0;
         $contador_muestras = 0;

@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 //use App\Models\MotivoMuestras;
 use App\Models\Empresas;
 use App\Models\Procesos;
-//use App\Models\Matrices;
+use App\Models\Matrices;
 use App\Models\TipoMuestras; //1 update por muestra
 use App\Models\Proyectos; //obligatorio
 use App\Models\ProcesoProyectos; //Obligatorio
@@ -295,15 +295,13 @@ class SetMuestraController extends Controller
                     ['id' => $id_empresa_con],
                     ['nombre_empresa' => $nombre_empresa_con, 'id_pais' => $id_pais, 'codigo_empresa' => $codigo_empresa_con]
                 );
-            
-                if ($historico != 'S') {
                 
-
-                /*$sql_matriz = Matrices::updateOrCreate(
+                $sql_matriz = Matrices::updateOrCreate(
                     ['id' => $id_matriz],
                     ['nombre_matriz' => $nombre_matriz]
-                );*/
-            
+                );
+                
+                if ($historico != 'S') {
                     $sql_tipo_muestra = TipoMuestras::updateOrCreate(
                         ['id' => $id_tipo_muestra],
                         ['nombre_tipo_muestra' => $nombre_tipo_muestra]
