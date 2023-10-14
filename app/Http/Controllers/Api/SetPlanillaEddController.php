@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Edd;
 use App\Models\EddCampos;
-use Illuminate\Support\Facades\Log;
 
 use Throwable;
 
@@ -37,7 +36,6 @@ class SetPlanillaEddController extends Controller
             $configuracion = $request->configuracion;
             $es_publico = 'S';
             $activo = 'S';
-            Log::info($request->id);
 
             if($request->id != 0) {
                 $reporte = Edd::find($request->id);

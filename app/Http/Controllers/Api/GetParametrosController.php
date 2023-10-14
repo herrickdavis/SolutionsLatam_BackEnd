@@ -97,8 +97,6 @@ class GetParametrosController extends Controller
                 ->orWhere(function ($query) use ($id_proyecto) {
                     $query->whereIn('pp.alias_proyecto', $id_proyecto);
                 })->distinct()->pluck('id_proceso')->toArray();
-                \Log::info($id_proyecto);
-                \Log::info($sql_procesos);
                 $sql_parametros = $sql_parametros->whereIn('pm.id_proceso', $sql_procesos);
             }
 
@@ -111,7 +109,6 @@ class GetParametrosController extends Controller
                $bindings = $query['bindings'];
                $time = $query['time'];
                $fullSql = vsprintf(str_replace('?', '%s', $sql), $bindings);
-               \Log::info('Consulta SQL: ' . $fullSql . ' - Tiempo de ejecución: ' . $time . ' segundos');
            }*/
         } catch (Throwable $e) {
             report($e);
