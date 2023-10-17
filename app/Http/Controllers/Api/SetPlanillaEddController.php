@@ -34,7 +34,7 @@ class SetPlanillaEddController extends Controller
             $user_id = 1;
             $nombre_reporte = $request->nombre_reporte;
             $configuracion = $request->configuracion;
-            $es_publico = 'S';
+            $es_publico = 'N';
             $activo = 'S';
 
             if($request->id != 0) {

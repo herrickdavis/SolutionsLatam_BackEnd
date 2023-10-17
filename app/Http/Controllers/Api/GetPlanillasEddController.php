@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Edd;
 use GuzzleHttp;
+use Throwable;
 
 class GetPlanillasEddController extends Controller
 {
@@ -27,16 +28,22 @@ class GetPlanillasEddController extends Controller
      */
     public function store(Request $request)
     {
-        $url = "http://api-lims.alslatam.com/api/getPlanillaEDDcontroller";
-        $query_json['id_empresa'] = 183;
-        $token = 'xvmkC508o2sxXrA7302NMSBJsD0XCtWunbSi1Mmk0OGBUItToS';
+        $edd_externo = [];
+        try {
+            $url = "http://api-lims.alslatam.com/api/getPlanillaEDDcontroller";
+            $query_json['id_empresa'] = 183;
+            $token = 'xvmkC508o2sxXrA7302NMSBJsD0XCtWunbSi1Mmk0OGBUItToS';
 
-        $client = new GuzzleHttp\Client();
-        $res = $client->request('POST', $url, [
-            'json' => $query_json, 'headers' => ['Authorization' => 'Bearer '.$token]
-        ]);
+            $client = new GuzzleHttp\Client();
+            $res = $client->request('POST', $url, [
+                'json' => $query_json, 'headers' => ['Authorization' => 'Bearer '.$token]
+            ]);
 
-        $edd_externo = json_decode($res->getBody(), true);
+            $edd_externo = json_decode($res->getBody(), true);
+        } catch(Throwable $e) {
+            //report($e);
+        }
+        
 
         $edds = Edd::select('id','nombre_reporte')->get()->toArray();
         

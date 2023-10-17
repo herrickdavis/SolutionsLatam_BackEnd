@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 use Throwable;
 use ZipArchive;
@@ -45,37 +46,31 @@ class GetDocumentoInformesController extends Controller
                             ->get();
             
             if (count($id_documento)==1) {
-                foreach ($sql_documentos as $documento) {
-                    //$relativeName = basename($documento->ruta);
-                    $fileName = $documento->nombre_documento;
-                    $ruta = $documento->ruta;
-                }
+                $documento = $sql_documentos->first();
+                $contents = Storage::disk('s3')->get($documento->ruta);
+                $fileName = $documento->nombre_documento;
+                $tempPath = storage_path('app/public/' . $fileName);
+                file_put_contents($tempPath, $contents);
+                return response()->download($tempPath, $fileName)->deleteFileAfterSend(true);
             } else {
                 $zip = new ZipArchive();
-                $fileName = $usuario->id.'_Informes_ALS.zip';
+                $zipFileName = $usuario->id . '_Informes_ALS.zip';
+                $tempZipPath = storage_path('app/public/' . $zipFileName);
 
-                //dd($sql_documentos);
-                if (file_exists(storage_path('app/public/'.$fileName))) {
-                    unlink(storage_path('app/public/'.$fileName));
-                }
-
-                if ($zip->open(storage_path('app/public/'.$fileName), ZipArchive::CREATE)== true) {
-                    $files = File::files(storage_path('app/public'));
+                if ($zip->open($tempZipPath, ZipArchive::CREATE) == true) {
                     foreach ($sql_documentos as $documento) {
-                        //$relativeName = basename($documento->ruta);
-                        $relativeName = $documento->nombre_documento;
-                        $zip->addFile(storage_path('app/'.$documento->ruta), $relativeName);
+                        $contents = Storage::disk('s3')->get($documento->ruta);
+                        $zip->addFromString($documento->nombre_documento, $contents);
                     }
                     $zip->close();
-                    $ruta = "public/".$fileName;
                 }
+
+                return response()->download($tempZipPath, $zipFileName)->deleteFileAfterSend(true);
             }
         } catch (Throwable $e) {
             report($e);
             return response()->json(['message' => $e->getMessage()], 400);
         }
-        
-        return response()->download(storage_path('app/'.$ruta), trans('texto.informes_als'));
     }
 
     /**

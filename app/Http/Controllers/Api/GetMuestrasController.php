@@ -77,7 +77,7 @@ class GetMuestrasController extends Controller
 
             $muestras = $this->paginate($muestras,$numero_fila);        
         } else {
-            //dd($filtros);
+            \Log::info('Iniciando proceso X...');
             $muestras = $this->queryMuestras($usuario);
             foreach ($filtros as $filtro) {                
                 $pre_cabecera = $filtro['cabecera'];
@@ -170,7 +170,7 @@ class GetMuestrasController extends Controller
             }
             $muestras = $muestras->paginate($numero_fila);
         }
-        
+        \Log::info('Proceso X completado.');
         $resultado = [];
         foreach ($muestras as $muestra) {
             $pre_resultado = [];
