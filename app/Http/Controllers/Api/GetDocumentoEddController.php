@@ -31,10 +31,14 @@ class GetDocumentoEddController extends Controller
      */
     public function store(Request $request)
     {
+        ini_set("memory_limit","128M");
         $user = $request->user();
         $filtros = $request->filtros;
         $filtros = $filtros['filtros'];
         $id_planilla = $request->id;
+        $numero_grupo = $request->numero_grupo;
+        $numero_anho = $request->year_grupo;
+        $get_muestras = $request->id_muestras;
 
         $id_empresas = getIdEmpresas($user);
 
@@ -139,11 +143,17 @@ class GetDocumentoEddController extends Controller
                     break;
             }
         }
+
         $query_principal .= $filtro_usuario;
 
         if(strpos($id_planilla, "E") !== false) {
-            $results = DB::select($query_principal);
-            $id_muestras = array_column($results, 'codigo_muestra');
+            if (count($get_muestras) > 0) {
+                $id_muestras = $get_muestras;
+            } else {
+                $results = DB::select($query_principal. "LIMIT 20");
+                $id_muestras = array_column($results, 'codigo_muestra');
+            }
+            
             
             $id_planilla = str_replace("E", "", $id_planilla);
             $url = "http://api-lims.alslatam.com/api/getDocumento";
@@ -155,13 +165,21 @@ class GetDocumentoEddController extends Controller
                 'Content-Type' => 'application/json',
             ];
 
-            $jsonParams = [
-                'id_reporte' => $id_planilla,
-                'Id_grupo' => '83984',
-                'Anio' => '2023',
-                'Id_muestras' => implode(",", $id_muestras),
-                // Agrega otros parámetros según tus necesidades
-            ];
+            if($numero_grupo != "" and $numero_anho != "") {
+                $jsonParams = [
+                    'id_reporte' => $id_planilla,
+                    'Id_grupo' => $numero_grupo,
+                    'Anio' => $numero_anho,
+                    'Id_muestras' => "",
+                ];
+            } else {
+                $jsonParams = [
+                    'id_reporte' => $id_planilla,
+                    'Id_grupo' => '',
+                    'Anio' => '',
+                    'Id_muestras' => implode(",", $id_muestras),
+                ];
+            }
 
             $response = $client->post($url, [
                 'headers' => $headers,
@@ -186,7 +204,16 @@ class GetDocumentoEddController extends Controller
             } else {
                 return response()->json(['error' => 'La solicitud no pudo completarse'], 500);
             }
-        } else {
+        } else {            
+            if($numero_grupo != "" and $numero_anho != "") {
+                $query_principal .= " AND gm.numero_grupo = '".$numero_grupo."' AND gm.anho_grupo = '".$numero_anho."'";
+            } else if (count($get_muestras) > 0) {
+                $query_principal .= " AND m.id in (".implode(",", $get_muestras).")";
+            } else {
+                $ahora = \Carbon\Carbon::now();
+                $query_principal .= " AND m.fecha_muestreo BETWEEN '".$ahora->subMonths(1)."' AND '".\Carbon\Carbon::now()."'";
+            }   
+            
             $edd = Edd::where('id','=',$id_planilla)->first();
             $cabeceras = json_decode($edd->configuracion, true);
 

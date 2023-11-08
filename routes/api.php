@@ -79,6 +79,9 @@ use App\Http\Controllers\Extras\UpdateEmpresaMuestraController;
 use App\Http\Controllers\Api\SetPlanillaEddController;
 use App\Http\Controllers\Api\GetPlanillasEddController;
 use App\Http\Controllers\Api\GetDocumentoEddController;
+
+//Data Externa
+use App\Http\Controllers\DataExterna\GetInfoController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -175,7 +178,8 @@ Route::apiResource('SetPlanillaEdd', SetPlanillaEddController::class);
 Route::apiResource('GetPlanillaEdd', GetPlanillasEddController::class);
 Route::middleware('auth:sanctum')->apiResource('GetDocumentoEdd', GetDocumentoEddController::class);
 
-
+//Muestra Externa
+Route::middleware('auth:sanctum')->apiResource('GetInfo', GetInfoController::class);
 //Route::middleware('auth:sanctum')->apiResource('GetCambiarPassword', GetCambiarPasswordController::class);
 
 

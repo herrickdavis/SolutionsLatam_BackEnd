@@ -76,6 +76,7 @@ class GetUsuariosController extends Controller
             $rpta['id_rol'] = $value->id_rol;
             $rpta['idioma'] = $value->idioma;
             $rpta['data_campo'] = $value->data_campo;
+            $rpta['region'] = "".$value->id_region;
             $rpta['ver_empresa_sol'] = $value->ver_empresa_sol;
             $rpta['ver_contacto_sol'] = $value->ver_contacto_sol;
             $rpta['ver_empresa_con'] = $value->ver_empresa_con;

@@ -419,15 +419,14 @@ class GetMuestrasController extends Controller
                             m.id_certificado AS id_certificado,
                             DATE_FORMAT(m.fecha_muestreo,'%d/%m/%Y %H:%i') AS fecha_muestreo"
                         ))
-                        /*->leftjoin(
+                        ->leftjoin(
                             DB::raw(
                                 '(SELECT id_muestra, MIN(id_grupo_muestra) id_grupo_muestra FROM muestra_grupo_muestras GROUP BY id_muestra) AS `mgm`'
                             ),
                             function ($join) {
                                 $join->on('mgm.id_muestra', '=', 'm.id');
                             }
-                        )*/
-                        ->leftjoin('muestra_grupo_muestras AS mgm', 'mgm.id_muestra', '=', 'm.id')
+                        )
                         ->leftjoin('grupo_muestras AS gm', 'gm.id', '=', 'mgm.id_grupo_muestra')
                         ->leftjoin('proyectos AS p', 'p.id', '=', 'm.id_proyecto')
                         ->leftjoin('estaciones AS e', 'e.id', '=', 'm.id_estacion')

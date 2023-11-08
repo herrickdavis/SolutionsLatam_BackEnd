@@ -57,6 +57,7 @@ class SetUsuarioController extends Controller
             $ver_contacto_con = $request->ver_contacto_contratante;
             $idioma = $request->idioma;
             $data_campo = $request->data_campo;
+            $id_region = $request->region;
             
             $user = new User();
             $user->name = $nombre;
@@ -70,6 +71,7 @@ class SetUsuarioController extends Controller
             $user->ver_contacto_con = $ver_contacto_con;
             $user->idioma = $idioma;
             $user->data_campo = $data_campo;
+            $user->id_region = $id_region;
             $user->save();
 
             foreach ($id_empresas as $id_empresa) {
@@ -139,6 +141,7 @@ class SetUsuarioController extends Controller
             $ver_contacto_con = $request->ver_contacto_con;
             $idioma = $request->idioma;
             $data_campo = $request->data_campo;
+            $id_region = $request->region;
 
             $user = User::where('email', '=', $email)->first();
             if (isset($user)) {
@@ -155,6 +158,7 @@ class SetUsuarioController extends Controller
                 $user->ver_contacto_con = $ver_contacto_con;
                 $user->idioma = $idioma;
                 $user->data_campo = $data_campo;
+                $user->id_region = $id_region;
                 $user->save();
                 
                 //Desactivo todos los usuarios empresa para ir agregando o activando los que se utilicen
