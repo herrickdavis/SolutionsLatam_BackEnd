@@ -179,7 +179,7 @@ Route::apiResource('GetPlanillaEdd', GetPlanillasEddController::class);
 Route::middleware('auth:sanctum')->apiResource('GetDocumentoEdd', GetDocumentoEddController::class);
 
 //Muestra Externa
-Route::middleware('auth:sanctum')->apiResource('GetInfo', GetInfoController::class);
+Route::apiResource('GetInfo', GetInfoController::class);
 //Route::middleware('auth:sanctum')->apiResource('GetCambiarPassword', GetCambiarPasswordController::class);
 
 

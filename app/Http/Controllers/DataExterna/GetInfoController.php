@@ -53,12 +53,32 @@ class GetInfoController extends Controller
                                     tm.nombre_tipo_muestra as nombre_tipo_muestra"
                                 ))
                                 ->distinct()->get();
-            
+        
+        $estaciones = DB::table('estaciones as e')
+        ->select(DB::raw(
+            "e.id as id,
+            case when e.alias_estacion is null then e.nombre_estacion else e.nombre_estacion end as nombre_estacion"
+        ))->get();
+
+        $proyectos = DB::table('proyectos as p')
+        ->select(DB::raw(
+            "p.id as id,
+            case when p.alias_proyecto is null then p.nombre_proyecto else p.nombre_proyecto end as nombre_proyecto"
+        ))->get();
+
+        $empresas = DB::table('empresas as e')
+        ->select(DB::raw(
+            "e.id as id,
+            e.nombre_empresa as nombre_empresa"
+        ))->get();
             
         $data = [];
         $data['parametros'] = $parametros;
         $data['matrices'] = $matrices;
         $data['tipo_muestras'] = $tipo_muestras;
+        $data['estaciones'] = $estaciones;
+        $data['proyectos'] = $proyectos;
+        $data['empresas'] = $empresas;
 
         return $data;
     }
