@@ -67,16 +67,16 @@ class GetMuestraController extends Controller
                         m.fecha_muestreo
                         "
                     ))
-                    ->leftjoin(
-                        DB::raw(
-                            '(SELECT id_muestra, MIN(id_grupo_muestra) id_grupo_muestra FROM muestra_grupo_muestras GROUP BY id_muestra) AS `mgm`'
-                        ),
-                        function ($join) {
-                            $join->on('mgm.id_muestra', '=', 'm.id');
-                        }
-                    )
+                    ->leftJoin('muestra_grupo_muestras AS mgm', function ($join) {
+                        $join->on('mgm.id_muestra', '=', 'm.id')
+                             ->where('mgm.preferido', '=', 'S');
+                    })
                     ->leftjoin('grupo_muestras AS gm', 'gm.id', '=', 'mgm.id_grupo_muestra')
-                    ->leftjoin('muestra_parametros AS mp', 'mp.id_muestra', '=', 'm.id')
+                    ->leftjoin('muestra_metodos AS mm','mm.id_muestra','=','m.id')
+                    ->leftJoin('muestra_parametros AS mp', function ($join) {
+                        $join->on('mp.id_muestra', '=', 'm.id')
+                             ->on('mp.id_metodo', '=', 'mm.id_metodo');
+                    })
                     ->leftjoin('parametros AS p', 'p.id', '=', 'mp.id_parametro')
                     ->leftjoin('proyectos AS pr', 'pr.id', '=', 'm.id_proyecto')
                     ->leftjoin('estaciones AS e', 'e.id', '=', 'm.id_estacion')
@@ -125,16 +125,16 @@ class GetMuestraController extends Controller
                         m.fecha_muestreo
                         "
                     ))
-                    ->leftjoin(
-                        DB::raw(
-                            '(SELECT id_muestra, MIN(id_grupo_muestra) id_grupo_muestra FROM muestra_grupo_muestras GROUP BY id_muestra) AS `mgm`'
-                        ),
-                        function ($join) {
-                            $join->on('mgm.id_muestra', '=', 'm.id');
-                        }
-                    )
+                    ->leftJoin('muestra_grupo_muestras AS mgm', function ($join) {
+                        $join->on('mgm.id_muestra', '=', 'm.id')
+                             ->where('mgm.preferido', '=', 'S');
+                    })
                     ->leftjoin('grupo_muestras AS gm', 'gm.id', '=', 'mgm.id_grupo_muestra')
-                    ->leftjoin('muestra_parametros AS mp', 'mp.id_muestra', '=', 'm.id')
+                    ->leftjoin('muestra_metodos AS mm','mm.id_muestra','=','m.id')
+                    ->leftJoin('muestra_parametros AS mp', function ($join) {
+                        $join->on('mp.id_muestra', '=', 'm.id')
+                             ->on('mp.id_metodo', '=', 'mm.id_metodo');
+                    })
                     ->leftjoin('parametros AS p', 'p.id', '=', 'mp.id_parametro')
                     ->leftjoin('proyectos AS pr', 'pr.id', '=', 'm.id_proyecto')
                     ->leftjoin('estaciones AS e', 'e.id', '=', 'm.id_estacion')

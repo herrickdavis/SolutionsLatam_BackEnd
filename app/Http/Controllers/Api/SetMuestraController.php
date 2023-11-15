@@ -456,9 +456,22 @@ class SetMuestraController extends Controller
                 ]
                 );
 
-                $sql_muestra_grupo_muestra = MuestraGrupoMuestra::updateOrCreate(
-                    ['id_grupo_muestra' => $id_grupo, 'id_muestra' => $id_muestra],
-                    []
+                //Inicio para evitar que las muestras tengan 2 grupos y ser mas eficientes en las consultas
+                //Obtener el id_grupo_muestra más bajo existente o el nuevo si es más bajo
+                $idGrupoMenor = MuestraGrupoMuestra::where('id_muestra', $id_muestra)->min('id_grupo_muestra') ?? $id_grupo;
+
+                // Comprobar si el grupo actual será el preferido
+                if ($id_grupo <= $idGrupoMenor) {
+                    // Si el grupo actual es el preferido, actualizar todos los otros a 'N'
+                    MuestraGrupoMuestra::where('id_muestra', $id_muestra)
+                                    ->where('id_grupo_muestra', '!=', $id_grupo)
+                                    ->update(['preferido' => 'N']);
+                }
+
+                // Actualizar o insertar el registro
+                $muestraGrupo = MuestraGrupoMuestra::updateOrCreate(
+                    ['id_muestra' => $id_muestra, 'id_grupo_muestra' => $id_grupo],
+                    ['preferido' => $id_grupo <= $idGrupoMenor ? 'S' : 'N']
                 );
 
                 $sql_proceso_muestra = ProcesoMuestras::updateOrCreate(
@@ -577,7 +590,7 @@ class SetMuestraController extends Controller
                                                     ->delete();
                                 continue;
                             }
-                        } 
+                        }
                         
                         $sql_parametro = MuestraParametros::updateOrCreate(
                             ['id_muestra' => $id_muestra, 'id_parametro' => $parametro['id_parametro']],

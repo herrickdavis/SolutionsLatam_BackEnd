@@ -38,7 +38,7 @@ class SetCambiarEmpresaController extends Controller
                 User::where('id',$usuario->id)->update(
                     ['id_empresa' => $id_empresa]
                 );
-
+                $usuario->id_empresa = $id_empresa;
                 $sql_matrices = DB::table('muestras AS m')
                 ->select(DB::raw(
                     "CAST(CASE 
