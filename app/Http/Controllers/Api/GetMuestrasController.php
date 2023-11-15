@@ -419,22 +419,17 @@ class GetMuestrasController extends Controller
                             m.id_certificado AS id_certificado,
                             DATE_FORMAT(m.fecha_muestreo,'%d/%m/%Y %H:%i') AS fecha_muestreo"
                         ))
-                        ->leftjoin(
-                            DB::raw(
-                                '(SELECT id_muestra, MIN(id_grupo_muestra) id_grupo_muestra FROM muestra_grupo_muestras GROUP BY id_muestra) AS `mgm`'
-                            ),
-                            function ($join) {
-                                $join->on('mgm.id_muestra', '=', 'm.id');
-                            }
-                        )
+                        ->leftJoin('muestra_grupo_muestras AS mgm', function ($join) {
+                            $join->on('mgm.id_muestra', '=', 'm.id')
+                                 ->where('mgm.preferido', '=', 'S');
+                        })
                         ->leftjoin('grupo_muestras AS gm', 'gm.id', '=', 'mgm.id_grupo_muestra')
                         ->leftjoin('proyectos AS p', 'p.id', '=', 'm.id_proyecto')
                         ->leftjoin('estaciones AS e', 'e.id', '=', 'm.id_estacion')
                         ->leftjoin('tipo_muestras AS ta', 'ta.id', '=', 'm.id_tipo_muestra')
                         ->leftjoin('empresas AS econ', 'econ.id', '=', 'm.id_empresa_con')
                         ->leftjoin('empresas AS esol', 'esol.id', '=', 'm.id_empresa_sol')
-                        ->where('m.activo', '=', 'S')
-                        ->where('ta.activo', '=', 'S')
+                        ->where('m.activo','S')
                         ->orderBy('m.fecha_muestreo', 'DESC');
                 
         $muestras = filtroMuestrasQuery($muestras,$usuario);
