@@ -22,7 +22,6 @@ class CreateMuestraExternasTable extends Migration
             $table->foreignId('id_estacion');
             $table->foreignId('id_empresa_sol');
             $table->foreignId('id_empresa_con');
-            $table->foreignId('id_estacion');
             $table->foreignId('id_parametro');
             $table->timestamps();
             $table->foreign('id_matriz')->references('id')->on('matrices');

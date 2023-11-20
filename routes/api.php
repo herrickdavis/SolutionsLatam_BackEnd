@@ -82,6 +82,9 @@ use App\Http\Controllers\Api\GetDocumentoEddController;
 
 //Data Externa
 use App\Http\Controllers\DataExterna\GetInfoController;
+use App\Http\Controllers\DataExterna\SetDataExternaArchivoController;
+use App\Http\Controllers\DataExterna\GetMuestrasDataExternaController;
+use App\Http\Controllers\DataExterna\SetMuestrasDataExternaController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -174,12 +177,16 @@ Route::middleware('auth:sanctum')->apiResource('GetAllProyectos', GetAllProyecto
 Route::middleware('auth:sanctum')->apiResource('SetAliasProyectos', SetAliasProyectosController::class);
 
 //EDD
-Route::apiResource('SetPlanillaEdd', SetPlanillaEddController::class);
-Route::apiResource('GetPlanillaEdd', GetPlanillasEddController::class);
+Route::middleware('auth:sanctum')->apiResource('SetPlanillaEdd', SetPlanillaEddController::class);
+Route::middleware('auth:sanctum')->apiResource('GetPlanillaEdd', GetPlanillasEddController::class);
 Route::middleware('auth:sanctum')->apiResource('GetDocumentoEdd', GetDocumentoEddController::class);
 
 //Muestra Externa
 Route::apiResource('GetInfo', GetInfoController::class);
+Route::apiResource('SetDataExternaArchivo', SetDataExternaArchivoController::class);
+Route::apiResource('GetMuestrasDataExterna', GetMuestrasDataExternaController::class);
+Route::apiResource('SetMuestrasDataExterna', SetMuestrasDataExternaController::class);
+
 //Route::middleware('auth:sanctum')->apiResource('GetCambiarPassword', GetCambiarPasswordController::class);
 
 

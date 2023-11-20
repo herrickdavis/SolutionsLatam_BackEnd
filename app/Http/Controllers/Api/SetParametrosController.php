@@ -31,17 +31,15 @@ class SetParametrosController extends Controller
 
         
         try {
-            Parametros::insertOrIgnore($parametros);
-
-            // foreach ($parametros as $parametro) {
-            //     $sql_parametro = Parametros::updateOrCreate(
-            //         ['id' => $parametro['id']],
-            //         [
-            //             'nombre_parametro' => $parametro['nombre_parametro'],
-            //             'activo' => $parametro['activo']
-            //         ]
-            //     );
-            // }
+            foreach ($parametros as $parametro) {
+                $sql_parametro = Parametros::updateOrCreate(
+                    ['id' => $parametro['id']],
+                    [
+                        'nombre_parametro' => $parametro['nombre_parametro'],
+                        'activo' => $parametro['activo']
+                    ]
+                );
+            }
             $rpta["success"] = "Ok";
             $rpta["mensaje"] = "Ok";
         } catch (\Throwable $e) {

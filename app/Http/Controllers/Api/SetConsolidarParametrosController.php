@@ -49,7 +49,6 @@ class SetConsolidarParametrosController extends Controller
 
                 $pgp = ParametroGrupoParametros::updateOrCreate(
                     [
-                        'id_grupo_parametro' => $grupo_parametro->id,
                         'id_parametro' => $id_parametro,
                         'idaux_metodo' => $idaux_metodo
                     ],
@@ -62,7 +61,6 @@ class SetConsolidarParametrosController extends Controller
 
                 $rpta["success"] = "Ok";
                 $rpta["mensaje"] = "Ok";
-                //return $pgp->id;
             }
         } catch (\Throwable $e) {
             report($e);

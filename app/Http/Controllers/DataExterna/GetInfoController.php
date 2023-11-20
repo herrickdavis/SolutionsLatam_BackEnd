@@ -49,7 +49,7 @@ class GetInfoController extends Controller
 
         $tipo_muestras = DB::table('tipo_muestras as tm')
                                 ->select(DB::raw(
-                                    "CONCAT('TA',tm.id) as id,
+                                    "tm.id as id,
                                     tm.nombre_tipo_muestra as nombre_tipo_muestra"
                                 ))
                                 ->distinct()->get();

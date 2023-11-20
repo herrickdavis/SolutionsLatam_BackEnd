@@ -29,9 +29,10 @@ class GetPlanillasEddController extends Controller
     public function store(Request $request)
     {
         $edd_externo = [];
+        $usuario = $request->user();
         try {
             $url = "http://api-lims.alslatam.com/api/getPlanillaEDDcontroller";
-            $query_json['id_empresa'] = 183;
+            $query_json['id_empresa'] = $usuario->id_empresa;
             $token = 'xvmkC508o2sxXrA7302NMSBJsD0XCtWunbSi1Mmk0OGBUItToS';
 
             $client = new GuzzleHttp\Client();
@@ -40,12 +41,15 @@ class GetPlanillasEddController extends Controller
             ]);
 
             $edd_externo = json_decode($res->getBody(), true);
+            if(array_key_exists('message',$edd_externo)) {
+                $edd_externo = [];
+            }
         } catch(Throwable $e) {
-            //report($e);
+            report($e);
         }
         
 
-        $edds = Edd::select('id','nombre_reporte')->get()->toArray();
+        $edds = Edd::select('id','nombre_reporte')->where('user_id',$usuario->id)->get()->toArray();
         
 
         $convertedArray1 = array_map(function ($item) {
