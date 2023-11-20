@@ -30,8 +30,9 @@ class SetPlanillaEddController extends Controller
      */
     public function store(Request $request)
     {
+        $usuario = $request->user();
         try {
-            $user_id = 1;
+            $user_id = $usuario->id;
             $nombre_reporte = $request->nombre_reporte;
             $configuracion = $request->configuracion;
             $es_publico = 'N';
