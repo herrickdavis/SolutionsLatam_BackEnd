@@ -174,8 +174,8 @@ Route::middleware('auth:sanctum')->apiResource('GetAllProyectos', GetAllProyecto
 Route::middleware('auth:sanctum')->apiResource('SetAliasProyectos', SetAliasProyectosController::class);
 
 //EDD
-Route::apiResource('SetPlanillaEdd', SetPlanillaEddController::class);
-Route::apiResource('GetPlanillaEdd', GetPlanillasEddController::class);
+Route::middleware('auth:sanctum')->apiResource('SetPlanillaEdd', SetPlanillaEddController::class);
+Route::middleware('auth:sanctum')->apiResource('GetPlanillaEdd', GetPlanillasEddController::class);
 Route::middleware('auth:sanctum')->apiResource('GetDocumentoEdd', GetDocumentoEddController::class);
 
 //Muestra Externa
