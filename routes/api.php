@@ -85,6 +85,7 @@ use App\Http\Controllers\DataExterna\GetInfoController;
 use App\Http\Controllers\DataExterna\SetDataExternaArchivoController;
 use App\Http\Controllers\DataExterna\GetMuestrasDataExternaController;
 use App\Http\Controllers\DataExterna\SetMuestrasDataExternaController;
+use App\Http\Controllers\DataExterna\GetExcelDataExternaPorValidarController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -186,6 +187,7 @@ Route::apiResource('GetInfo', GetInfoController::class);
 Route::apiResource('SetDataExternaArchivo', SetDataExternaArchivoController::class);
 Route::apiResource('GetMuestrasDataExterna', GetMuestrasDataExternaController::class);
 Route::apiResource('SetMuestrasDataExterna', SetMuestrasDataExternaController::class);
+Route::apiResource('GetExcelDataExternaPorValidar', GetExcelDataExternaPorValidarController::class);
 
 //Route::middleware('auth:sanctum')->apiResource('GetCambiarPassword', GetCambiarPasswordController::class);
 

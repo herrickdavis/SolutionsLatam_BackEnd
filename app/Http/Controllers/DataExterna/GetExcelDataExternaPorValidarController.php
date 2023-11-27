@@ -4,9 +4,10 @@ namespace App\Http\Controllers\DataExterna;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\DataExternaTemporal;
+use App\Exports\DataExternaPorValidarExternaExport;
+use Maatwebsite\Excel\Facades\Excel;
 
-class SetMuestrasDataExternaController extends Controller
+class GetExcelDataExternaPorValidarController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -26,17 +27,7 @@ class SetMuestrasDataExternaController extends Controller
      */
     public function store(Request $request)
     {
-        foreach ($request->all() as $muestra) {
-            $muestra_query = DataExternaTemporal::find($muestra["id"]);
-            $muestra_query->id_matriz = $muestra["id_matriz"];
-            $muestra_query->id_tipo_muestra = $muestra["id_tipo_muestra"];
-            $muestra_query->id_estacion = $muestra["id_estacion"];
-            $muestra_query->id_proyecto = $muestra["id_proyecto"];
-            $muestra_query->id_empresa_contratante = $muestra["id_empresa_contratante"];
-            $muestra_query->id_empresa_solicitante = $muestra["id_empresa_solicitante"];
-            $muestra_query->id_parametro = $muestra["id_parametro"];
-            $muestra_query->save();
-        }
+        return Excel::download(new DataExternaPorValidarExternaExport, 'data_externa.xlsx');
     }
 
     /**
