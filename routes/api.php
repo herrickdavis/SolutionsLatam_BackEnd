@@ -184,10 +184,10 @@ Route::middleware('auth:sanctum')->apiResource('GetDocumentoEdd', GetDocumentoEd
 
 //Muestra Externa
 Route::apiResource('GetInfo', GetInfoController::class);
-Route::apiResource('SetDataExternaArchivo', SetDataExternaArchivoController::class);
-Route::apiResource('GetMuestrasDataExterna', GetMuestrasDataExternaController::class);
-Route::apiResource('SetMuestrasDataExterna', SetMuestrasDataExternaController::class);
-Route::apiResource('GetExcelDataExternaPorValidar', GetExcelDataExternaPorValidarController::class);
+Route::middleware('auth:sanctum')->apiResource('SetDataExternaArchivo', SetDataExternaArchivoController::class);
+Route::middleware('auth:sanctum')->apiResource('GetMuestrasDataExterna', GetMuestrasDataExternaController::class);
+Route::middleware('auth:sanctum')->apiResource('SetMuestrasDataExterna', SetMuestrasDataExternaController::class);
+Route::middleware('auth:sanctum')->apiResource('GetExcelDataExternaPorValidar', GetExcelDataExternaPorValidarController::class);
 
 //Route::middleware('auth:sanctum')->apiResource('GetCambiarPassword', GetCambiarPasswordController::class);
 

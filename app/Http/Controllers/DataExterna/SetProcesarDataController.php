@@ -4,12 +4,12 @@ namespace App\Http\Controllers\DataExterna;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Imports\ExcelDataExternaImport;
 use Illuminate\Support\Facades\DB;
+use App\Models\MuestraExterna;
 
 use Throwable;
-class SetDataExternaArchivoController extends Controller
+
+class SetProcesarDataController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -29,26 +29,30 @@ class SetDataExternaArchivoController extends Controller
      */
     public function store(Request $request)
     {
-        set_time_limit(1200);
-        $file = $request->file('excel');
-        $usuario = $request->user();
+        $user = $request->user();
+        //Leo los datos a procesar por usuario
         try {
-            //Primero borramos los datos anteriores
-            DB::table('data_externa_temporals')->where('id_user', $usuario->id)
-                                                ->where(function($query) {
-                                                    $query->whereNull('id_muestra')
-                                                        ->orWhereNull('id_matriz')
-                                                        ->orWhereNull('id_tipo_muestra')
-                                                        ->orWhereNull('id_proyecto')
-                                                        ->orWhereNull('id_estacion')
-                                                        ->orWhereNull('id_empresa_contratante')
-                                                        ->orWhereNull('id_empresa_solicitante')
-                                                        ->orWhereNull('id_parametro');
-                                                    })->delete();
-            Excel::import(new ExcelDataExternaImport($usuario->id), $file);
+            DB::beginTransaction();
+            $resultados = DB::table('data_externa_temporals')->select(
+                                        'id_muestras',
+                                        'id_matriz',
+                                        'id_tipo_muestra',
+                                        'id_proyecto',
+                                        'id_estacion',
+                                        'id_empresa_sol',
+                                        'id_empresa_con')
+                                    ->where('id_user', $user->id)->get()->toArray();;
+            //inserto los registros
+            MuestraExterna::insert($resultados);
+            //elimino los registros
+            DB::table('data_externa_temporals')->where('id_user', $user->id)->delete();
+
+            DB::commit();
+
             $rpta["success"] = "Ok";
             $rpta["mensaje"] = "Ok";
         } catch (Throwable $e) {
+            DB::rollBack();
             report($e);
             $rpta["error"] = "error";
             $rpta["mensaje"] = $e->getMessage();

@@ -38,6 +38,7 @@ return [
   'Solicitante' => 'Solicitante',
   'Contratante' => 'Contratante',
   'Fecha_Muestreo' => 'Fecha Muestreo',
+  'Hora_Muestreo' => 'Hora Muestreo',
   'Fecha Inicio' => 'Fecha Inicio',
   'Fecha Fin' => 'Fecha Fin',
   'Estaciones' => 'Estaciones',

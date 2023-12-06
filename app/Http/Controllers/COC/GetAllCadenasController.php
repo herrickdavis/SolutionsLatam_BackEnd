@@ -26,7 +26,7 @@ class GetAllCadenasController extends Controller
      */
     public function store(Request $request)
     {
-        $cadenas = DB::table("cadenas as c")->select('codigo_laboratorio','numero_grupo','numero_proceso','numero_orden_servicio','estacion','fecha_muestreo','tipo_muestra','informacion_adicional')->get();
+        $cadenas = DB::table("cadenas as c")->select('codigo_laboratorio','numero_grupo','numero_proceso','numero_orden_servicio','estacion','fecha_muestreo','hora_muestreo','tipo_muestra','informacion_adicional')->get();
         
         return $cadenas;
     }

@@ -263,7 +263,9 @@ class SetMuestraController extends Controller
                     $pre_parametros['maximo'] = $parametro['limite_maximo'];
                     $pre_parametros['minimo'] = $parametro['limite_minimo'];
                     if ($id_limite != null) {//solo ingreso limites cuando trae limite
-                        array_push($limite_parametros, $pre_parametros);
+                        if($pre_parametros['maximo'] != null && $pre_parametros['minimo'] != null) {
+                            array_push($limite_parametros, $pre_parametros);
+                        }
                     }
                 }
             
@@ -423,29 +425,26 @@ class SetMuestraController extends Controller
                 $sql_muestra = Muestras::updateOrCreate(
                     ['id' => $id_muestra],
                     [
-                    'numero_muestra' => $numero_muestra,
-                    //'id_grupo' => $id_grupo,
-                    //'numero_grupo' => $numero_grupo,
-                    //'id_proceso' => $id_proceso,
-                    'id_estado' => $id_estado,
-                    'id_parecer' => $parecer_muestra,
-                    'con_data' => $data_muestra,
-                    'id_motivo_muestra' => $id_motivo_muestra,
-                    'id_empresa_con' => $id_empresa_con,
-                    'id_user_con' => $sql_usuario_con->id,
-                    'id_empresa_sol' => $id_empresa_sol,
-                    'id_user_sol' => $sql_usuario_sol->id,
-                    'id_estacion' => $sql_estacion->id,
-                    'id_proyecto' => $sql_proyecto->id,
-                    'id_proceso_proyecto' => $sql_proceso_proyecto->id,
-                    'id_tipo_muestra' => $id_tipo_muestra,
-                    'id_matriz' => $id_matriz,
-                    'id_limite' => $id_limite,
-                    'fecha_muestreo' => ($fecha_muestreo != null) ? date('Y-m-d H:i:s', strtotime($fecha_muestreo)) : null,
-                    'fecha_prevista_entrega' => ($fecha_prevista_entrega != null) ? date('Y-m-d H:i:s', strtotime($fecha_prevista_entrega)) : null,
-                    'fecha_publicacion' => ($fecha_publicacion != null) ? date('Y-m-d H:i:s', strtotime($fecha_publicacion)) : null,
-                    'activo' => $activo
-                ]
+                        'numero_muestra' => $numero_muestra,
+                        'id_estado' => $id_estado,
+                        'id_parecer' => $parecer_muestra,
+                        'con_data' => $data_muestra,
+                        'id_motivo_muestra' => $id_motivo_muestra,
+                        'id_empresa_con' => $id_empresa_con,
+                        'id_user_con' => $sql_usuario_con->id,
+                        'id_empresa_sol' => $id_empresa_sol,
+                        'id_user_sol' => $sql_usuario_sol->id,
+                        'id_estacion' => $sql_estacion->id,
+                        'id_proyecto' => $sql_proyecto->id,
+                        'id_proceso_proyecto' => $sql_proceso_proyecto->id,
+                        'id_tipo_muestra' => $id_tipo_muestra,
+                        'id_matriz' => $id_matriz,
+                        'id_limite' => $id_limite,
+                        'fecha_muestreo' => ($fecha_muestreo != null) ? date('Y-m-d H:i:s', strtotime($fecha_muestreo)) : null,
+                        'fecha_prevista_entrega' => ($fecha_prevista_entrega != null) ? date('Y-m-d H:i:s', strtotime($fecha_prevista_entrega)) : null,
+                        'fecha_publicacion' => ($fecha_publicacion != null) ? date('Y-m-d H:i:s', strtotime($fecha_publicacion)) : null,
+                        'activo' => $activo
+                    ]
                 );
 
                 $sql_grupo = GrupoMuestras::updateOrCreate(
@@ -562,13 +561,15 @@ class SetMuestraController extends Controller
                 } else {
                     foreach ($parametros as $parametro) {
                         if ($id_limite != null and $historico != 'S') {//solo ingreso limites cuando trae limite
-                            $sql_limite_parametros = LimiteParametros::updateOrCreate(
-                                ['id_limite' => $id_limite, 'id_parametro' => $parametro['id_parametro']],
-                                [
-                                'maximo' => $parametro['limite_maximo'],
-                                'minimo' => $parametro['limite_minimo'],
-                            ]
-                            );
+                            if ($parametro['limite_maximo'] != null && $parametro['limite_minimo'] != null) {
+                                $sql_limite_parametros = LimiteParametros::updateOrCreate(
+                                    ['id_limite' => $id_limite, 'id_parametro' => $parametro['id_parametro']],
+                                    [
+                                        'maximo' => $parametro['limite_maximo'],
+                                        'minimo' => $parametro['limite_minimo'],
+                                    ]
+                                );
+                            }
                         }
 
                         if ($parametro['unidad'] != null) {

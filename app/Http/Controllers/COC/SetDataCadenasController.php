@@ -46,6 +46,10 @@ class SetDataCadenasController extends Controller
                     }
                     
                 }
+                $horaMuestreo = $value['hora_muestreo'];
+                $horaMuestreo = $horaMuestreo . ':00';
+                $value['hora_muestreo'] = $horaMuestreo;
+
                 $value['created_at'] = Carbon::now();
                 $value['updated_at'] = Carbon::now();
             }

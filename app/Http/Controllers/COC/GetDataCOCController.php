@@ -62,6 +62,9 @@ class GetDataCOCController extends Controller
                     case strtolower(trans('texto.Fecha_Muestreo')):
                         $cadenas = $this->filtros($cadenas, 'c.fecha_muestreo', $condicion, $valor);
                         break;
+                    case strtolower(trans('texto.Hora_Muestreo')):
+                            $cadenas = $this->filtros($cadenas, 'c.hora_muestreo', $condicion, $valor);
+                            break;
                     case strtolower(trans('texto.Tipo_Muestra')):
                         $cadenas = $this->filtros($cadenas, 'c.tipo_muestra', $condicion, $valor);
                         break;
@@ -80,6 +83,7 @@ class GetDataCOCController extends Controller
             $pre_resultado['data'][] = $cadena->numero_proceso;
             $pre_resultado['data'][] = $cadena->estacion;
             $pre_resultado['data'][] = $cadena->fecha_muestreo;
+            $pre_resultado['data'][] = substr($cadena->hora_muestreo, 0, 5);
             $pre_resultado['data'][] = $cadena->tipo_muestra;
             $pre_resultado['render']['color'] = null;
             $pre_resultado['render']['flag'] = false;
@@ -94,9 +98,10 @@ class GetDataCOCController extends Controller
             trans('texto.numero_proceso'),
             trans('texto.Estacion'),
             trans('texto.Fecha_Muestreo'),
+            trans('texto.Hora_Muestreo'),
             trans('texto.Tipo_Muestra'),
         ];
-        $rpta['format'] = ['', '', '', '', '', ''];
+        $rpta['format'] = ['', '', '', '', '', '', ''];
 
         $rpta['pagina']['current_page'] = $cadenas->currentPage();
         $rpta['pagina']['data'] = $resultado;
@@ -111,7 +116,6 @@ class GetDataCOCController extends Controller
         $rpta['pagina']['prev_page_url'] = $cadenas->previousPageUrl();
         $rpta['pagina']['to'] = $cadenas->lastItem();
         $rpta['pagina']['total'] = $cadenas->total();
-
         return $rpta;
     }
 

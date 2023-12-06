@@ -26,6 +26,7 @@ class GetMuestrasDataExternaController extends Controller
      */
     public function store(Request $request)
     {
+        $user = $request->user();
         $pagina = $request->pagina;
         if(!isset($pagina)) {
             $pagina = 1;
@@ -33,7 +34,7 @@ class GetMuestrasDataExternaController extends Controller
         $porPagina = 1000; // Número de registros por página
         $skip = ($pagina - 1) * $porPagina;
         $registros = DB::table('data_externa_temporals')
-                ->where('id_user',0)
+                ->where('id_user', $user->id)
                 ->skip($skip)
                 ->take($porPagina)
                 ->get();

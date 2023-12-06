@@ -16,11 +16,19 @@ class ExcelDataExternaImport implements ToCollection, WithHeadingRow, WithChunkR
     * @param Collection $collection
     */
     private $fila = 1;
+    private $userId;
+
+    public function __construct($userId)
+    {
+        $this->userId = $userId;
+    }
+
     public function collection(Collection $rows)
     {
         $insertData = [];
         foreach ($rows as $row) {
             $insertData[] = [
+                'id_user' => $this->userId,
                 'fila' => $this->fila,
                 'id_muestra' => $row['id_muestra'],
                 'fecha_muestreo' => $row['fecha_muestreo'],
@@ -36,7 +44,6 @@ class ExcelDataExternaImport implements ToCollection, WithHeadingRow, WithChunkR
             ];
             $this->fila++;
         }
-        Log::info($insertData);
         DB::table('data_externa_temporals')->insert($insertData);
         
     }
