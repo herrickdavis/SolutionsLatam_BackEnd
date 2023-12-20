@@ -59,7 +59,7 @@ class GetTipoMuestraController extends Controller
                 $analytic_click->id_boton = 19;
                 $analytic_click->save();
                 //datos con grupo de matriz
-                if (substr(strval($id_matriz),0,3) == "999") {
+                /*if (substr(strval($id_matriz),0,3) == "999") {
                     $id_matriz = str_replace('999','',$id_matriz);
                     $sql_tipo_muestra = DB::table('muestras as m')
                             ->select(DB::raw(
@@ -78,7 +78,21 @@ class GetTipoMuestraController extends Controller
                             ))
                             ->leftjoin('tipo_muestras as tm', 'tm.id', '=', 'm.id_tipo_muestra')
                             ->where('m.id_matriz', '=', $id_matriz)->distinct('id')->orderBy('nombre_tipo_muestra');
+                }*/
+
+                $sql_tipo_muestra = DB::table('muestras as m')
+                        ->select(DB::raw(
+                            "CONCAT('TA',tm.id) as id,
+                            tm.nombre_tipo_muestra as nombre_tipo_muestra"
+                        ))
+                        ->leftjoin('tipo_muestras as tm', 'tm.id', '=', 'm.id_tipo_muestra');
+
+                if ($id_matriz !== 0) {
+                    $sql_tipo_muestra->where('m.id_matriz_v2', '=', $id_matriz);
+                } else {
+                    $sql_tipo_muestra->whereNull('m.id_matriz_v2');
                 }
+                $sql_tipo_muestra = $sql_tipo_muestra->distinct('id')->orderBy('nombre_tipo_muestra');
             }
 
             $sql_tipo_muestra = filtroMuestrasQuery($sql_tipo_muestra,$usuario);

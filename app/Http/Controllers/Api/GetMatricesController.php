@@ -42,7 +42,7 @@ class GetMatricesController extends Controller
                             tm.nombre_tipo_muestra as nombre_tipo_muestra
                             "
                         ))
-                        ->leftjoin('matrices AS mx', 'mx.id', '=', 'm.id_matriz')
+                        ->leftjoin('matrices_v2 AS mx', 'mx.id', '=', 'm.id_matriz_v2')
                         ->leftjoin('tipo_muestras AS tm', 'tm.id', '=', 'm.id_tipo_muestra')
                         //->where('m.id_empresa_sol', '=', $idauxempresa)
                         ->where('m.activo', '=', 'S')

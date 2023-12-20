@@ -58,7 +58,7 @@ class GetLoginController extends Controller
             }            
             //grupo 999 and out grupo 998
             $id_empresas = getIdEmpresas($user);
-            $cacheKey = 'matrices'.$user->ver_empresa_sol.'_'.$user->ver_contacto_sol.'_'.$user->ver_empresa_con.'_'.$user->ver_contacto_con.'_'.implode("_",$id_empresas);
+            $cacheKey = 'matrices'.$user->ver_empresa_sol.'_'.$user->ver_contacto_sol.'_'.$user->ver_empresa_con.'_'.$user->ver_contacto_con.'_'.implode("_",$id_empresas)."4";
 
             $sql_matrices = Cache::get($cacheKey);
             
@@ -66,14 +66,12 @@ class GetLoginController extends Controller
                 $query = DB::table('muestras AS m')
                     ->select(DB::raw(
                         "CAST(CASE 
-                        WHEN gm.nombre_grupo_matriz is null then CONCAT('998',mx.id) else CONCAT('999',gm.id) end AS UNSIGNED) as id,
+                        WHEN mx.id is null then '0' else mx.id END AS UNSIGNED) as id,
                         CASE
-                        WHEN gm.nombre_grupo_matriz is null then mx.nombre_matriz else gm.nombre_grupo_matriz end as nombre_matriz"
+                        WHEN mx.id is null then 'Otros' else mx.nombre_matriz end as nombre_matriz"
                     ))
-                    ->leftjoin('matrices AS mx', 'mx.id', '=', 'm.id_matriz')
-                    ->leftjoin('matriz_grupo_matrices AS mgm', 'mgm.id_matriz', '=', 'm.id_matriz')
-                    ->leftjoin('grupo_matrices AS gm', 'gm.id', '=', 'mgm.id_grupo_matriz')
-                    ->orderBy('mx.nombre_matriz', 'ASC')->distinct();
+                    ->leftjoin('matrices_v2 AS mx', 'mx.id', '=', 'm.id_matriz_v2')
+                    ->orderBy('nombre_matriz', 'ASC')->distinct();
                 $query = filtroMuestrasQuery($query,$user);
                 $sql_matrices = $query->get();
                 Cache::put($cacheKey, $sql_matrices, 604800);

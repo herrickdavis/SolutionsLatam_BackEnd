@@ -98,7 +98,7 @@ class GetDocumentoEddController extends Controller
                             LEFT JOIN muestra_parametros as mp on mm.id_metodo = mp.id_metodo and mp.id_muestra = m.id
                             LEFT JOIN unidades as u on u.id = mp.id_unidad
                             LEFT JOIN parametros as pa on pa.id = mp.id_parametro
-                            LEFT JOIN matrices as ma on ma.id = m.id_matriz
+                            LEFT JOIN matrices_v2 as ma on ma.id = m.id_matriz_v2
                             LEFT JOIN estaciones as e on e.id = m.id_estacion
                             LEFT JOIN tipo_muestras as tm on tm.id = m.id_tipo_muestra
                             LEFT JOIN limites as l on l.id = m.id_limite

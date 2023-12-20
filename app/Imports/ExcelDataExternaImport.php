@@ -7,8 +7,7 @@ use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Illuminate\Support\Facades\DB;
-
-use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class ExcelDataExternaImport implements ToCollection, WithHeadingRow, WithChunkReading
 {
@@ -27,11 +26,12 @@ class ExcelDataExternaImport implements ToCollection, WithHeadingRow, WithChunkR
     {
         $insertData = [];
         foreach ($rows as $row) {
+            $fechaMuestreo = Carbon::createFromFormat('d/m/Y', $row['fecha_muestreo'])->format('Y-m-d');
             $insertData[] = [
                 'id_user' => $this->userId,
                 'fila' => $this->fila,
                 'id_muestra' => $row['id_muestra'],
-                'fecha_muestreo' => $row['fecha_muestreo'],
+                'fecha_muestreo' => $fechaMuestreo,
                 'matriz' => $row['matriz'],
                 'tipo_muestra' => $row['tipo_muestra'],
                 'proyecto' => $row['proyecto'],

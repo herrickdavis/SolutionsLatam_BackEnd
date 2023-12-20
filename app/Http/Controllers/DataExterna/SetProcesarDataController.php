@@ -42,8 +42,15 @@ class SetProcesarDataController extends Controller
                                         'id_empresa_sol',
                                         'id_empresa_con')
                                     ->where('id_user', $user->id)->get()->toArray();;
-            //inserto los registros
+            //inserto los registros en muestras
             MuestraExterna::insert($resultados);
+            //inserto los registros en parametros
+            $resultados = DB::table('data_externa_temporals')->select(
+                'id_muestras AS id_muestra_externa',
+                'id_parametro',
+                'valor',
+                'id_unidad')
+            ->where('id_user', $user->id)->get()->toArray();;
             //elimino los registros
             DB::table('data_externa_temporals')->where('id_user', $user->id)->delete();
 

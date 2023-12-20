@@ -36,16 +36,13 @@ class GetInfoController extends Controller
                                 ->leftjoin('grupo_parametros AS gp', 'gp.id', '=', 'pgp.id_grupo_parametro')
                                 ->distinct()->get();
 
-        $matrices = DB::table('matrices as mx')
+        $matrices = DB::table('matrices_v2 as mx')
                             ->select(DB::raw(
                                 "CAST(CASE 
-                                WHEN gm.nombre_grupo_matriz is null then CONCAT('998',mx.id) else CONCAT('999',gm.id) end AS UNSIGNED) as id,
-                                CASE
-                                WHEN gm.nombre_grupo_matriz is null then mx.nombre_matriz else gm.nombre_grupo_matriz end as nombre_matriz"
-                            ))
-                            ->leftjoin('matriz_grupo_matrices as mgm', 'mgm.id_matriz', '=', 'mx.id')
-                            ->leftjoin('grupo_matrices as gm', 'gm.id', '=', 'mgm.id_grupo_matriz')
-                            ->distinct()->get();
+                                        WHEN mx.id is null then '0' else mx.id END AS UNSIGNED) as id,
+                                        CASE
+                                        WHEN mx.id is null then 'Otros' else mx.nombre_matriz end as nombre_matriz"
+                            ))->distinct()->get();
 
         $tipo_muestras = DB::table('tipo_muestras as tm')
                                 ->select(DB::raw(

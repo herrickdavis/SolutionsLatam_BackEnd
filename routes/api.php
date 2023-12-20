@@ -75,6 +75,7 @@ use App\Http\Controllers\ApiClientes\MuestrasController;
 
 // Extras
 use App\Http\Controllers\Extras\UpdateEmpresaMuestraController;
+use App\Http\Controllers\Extras\UpdateMatricesV2Controller;
 //EDD
 use App\Http\Controllers\Api\SetPlanillaEddController;
 use App\Http\Controllers\Api\GetPlanillasEddController;
@@ -86,6 +87,7 @@ use App\Http\Controllers\DataExterna\SetDataExternaArchivoController;
 use App\Http\Controllers\DataExterna\GetMuestrasDataExternaController;
 use App\Http\Controllers\DataExterna\SetMuestrasDataExternaController;
 use App\Http\Controllers\DataExterna\GetExcelDataExternaPorValidarController;
+use App\Http\Controllers\DataExterna\MuestraExternaController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -112,7 +114,7 @@ Route::apiResource('SetParametros', SetParametrosController::class);
 Route::apiResource('SetMetodos', SetMetodosController::class);
 Route::apiResource('SetDataCampo', SetDataCampoController::class);
 Route::apiResource('SetDocumentosMuestra', SetDocumentosMuestraController::class);
-Route::apiResource('SetRegistroUsuarios', SetRegistroUsuariosController::class);
+//Route::apiResource('SetRegistroUsuarios', SetRegistroUsuariosController::class);
 Route::apiResource('GetLogin', GetLoginController::class);
 Route::apiResource('GetEmpresas', GetEmpresasController::class);
 Route::apiResource('SetEmpresaHistorico', SetEmpresaHistoricoController::class);
@@ -140,6 +142,7 @@ Route::apiResource('GetRegionEmpresas', GetRegionEmpresasController::class);
 
 //Extras
 Route::apiResource('UpdateEmpresaMuestra', UpdateEmpresaMuestraController::class);
+Route::apiResource('UpdateMatricesV2', UpdateMatricesV2Controller::class);
 
 
 Route::middleware('auth:sanctum')->apiResource('GetMuestras', GetMuestrasController::class);
@@ -188,6 +191,9 @@ Route::middleware('auth:sanctum')->apiResource('SetDataExternaArchivo', SetDataE
 Route::middleware('auth:sanctum')->apiResource('GetMuestrasDataExterna', GetMuestrasDataExternaController::class);
 Route::middleware('auth:sanctum')->apiResource('SetMuestrasDataExterna', SetMuestrasDataExternaController::class);
 Route::middleware('auth:sanctum')->apiResource('GetExcelDataExternaPorValidar', GetExcelDataExternaPorValidarController::class);
+Route::middleware('auth:sanctum')->delete('/DataExternaEliminarMuestra/{id}', [MuestraExternaController::class, 'eliminarMuestra']);
+Route::middleware('auth:sanctum')->post('/DataExternaCrearEstacion', [MuestraExternaController::class, 'agregarEstacion']);
+Route::middleware('auth:sanctum')->post('/DataExternaCrearProyecto', [MuestraExternaController::class, 'agregarProyecto']);
 
 //Route::middleware('auth:sanctum')->apiResource('GetCambiarPassword', GetCambiarPasswordController::class);
 

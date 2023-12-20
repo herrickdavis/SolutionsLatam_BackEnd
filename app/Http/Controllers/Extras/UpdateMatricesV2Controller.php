@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\DataExterna;
+namespace App\Http\Controllers\Extras;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\DataExternaTemporal;
+use App\Models\MatrizV2;
+use Illuminate\Support\Facades\DB;
 
-class SetMuestrasDataExternaController extends Controller
+class UpdateMatricesV2Controller extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -26,21 +27,22 @@ class SetMuestrasDataExternaController extends Controller
      */
     public function store(Request $request)
     {
-        foreach ($request->all() as $muestra) {
-            $muestra_query = DataExternaTemporal::find($muestra["id"]);
-            $muestra_query->id_matriz = $muestra["id_matriz"];
-            $muestra_query->id_tipo_muestra = $muestra["id_tipo_muestra"];
-            $muestra_query->id_estacion = $muestra["id_estacion"];
-            $muestra_query->id_proyecto = $muestra["id_proyecto"];
-            $muestra_query->id_empresa_contratante = $muestra["id_empresa_contratante"];
-            $muestra_query->id_empresa_solicitante = $muestra["id_empresa_solicitante"];
-            if (strncmp($muestra["id_parametro"], "P", 1) === 0) {
-                $id_parametro = substr($muestra["id_parametro"],1);
-            } else if (strncmp($string, "g", 1) === 0) {
-                echo "El string no comienza ni con 'p' ni con 'g'.";
+        try {
+            if($request->id_matriz_v2 != 0) {
+                DB::beginTransaction();
+        
+                // Aquí tu lógica de actualización
+                DB::table('muestras')
+                    ->where('id_tipo_muestra', $request->id_tipo_muestra)
+                    ->update(['id_matriz_v2' => $request->id_matriz_v2]);
+        
+                DB::commit();
             }
-            $muestra_query->id_parametro = ;
-            $muestra_query->save();
+            return response()->json(['success' => true, 'message' => 'Actualización exitosa.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::info($e);
+            return response()->json(['success' => false, 'message' => 'Error al actualizar.'], 404);
         }
     }
 

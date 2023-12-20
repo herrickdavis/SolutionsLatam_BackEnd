@@ -5,6 +5,7 @@ namespace App\Http\Controllers\DataExterna;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class GetMuestrasDataExternaController extends Controller
 {
@@ -37,7 +38,13 @@ class GetMuestrasDataExternaController extends Controller
                 ->where('id_user', $user->id)
                 ->skip($skip)
                 ->take($porPagina)
-                ->get();
+                ->get()
+                ->map(function ($registro) {
+                    if (isset($registro->fecha_muestreo)) {
+                        $registro->fecha_muestreo = Carbon::parse($registro->fecha_muestreo)->format('d-m-Y');
+                    }
+                    return $registro;
+                });
 
         return response()->json($registros);
     }

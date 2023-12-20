@@ -33,7 +33,6 @@ class SetDataExternaArchivoController extends Controller
         $file = $request->file('excel');
         $usuario = $request->user();
         try {
-            //Primero borramos los datos anteriores
             DB::table('data_externa_temporals')->where('id_user', $usuario->id)
                                                 ->where(function($query) {
                                                     $query->whereNull('id_muestra')

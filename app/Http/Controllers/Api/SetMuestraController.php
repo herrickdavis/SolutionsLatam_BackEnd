@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
 use App\Models\Empresas;
 use App\Models\Procesos;
 use App\Models\Matrices;
+use App\Models\MatrizV2;
 use App\Models\TipoMuestras; //1 update por muestra
 use App\Models\Proyectos; //obligatorio
 use App\Models\ProcesoProyectos; //Obligatorio
@@ -299,6 +300,11 @@ class SetMuestraController extends Controller
                 );
                 
                 $sql_matriz = Matrices::updateOrCreate(
+                    ['id' => 27],//Le asigano una matriz por defecto ya que no se utilizara este campo nuevamente
+                    ['nombre_matriz' => 'Otros'] // se utilizara matriz v2
+                );
+                //Revisar si llega como 0 dejarlo null
+                $sql_matriz = MatrizV2::updateOrCreate(
                     ['id' => $id_matriz],
                     ['nombre_matriz' => $nombre_matriz]
                 );
@@ -438,7 +444,8 @@ class SetMuestraController extends Controller
                         'id_proyecto' => $sql_proyecto->id,
                         'id_proceso_proyecto' => $sql_proceso_proyecto->id,
                         'id_tipo_muestra' => $id_tipo_muestra,
-                        'id_matriz' => $id_matriz,
+                        'id_matriz' => 27, //Lo fijo en 27 ya no se utilizara
+                        'id_matriz_v2' => $id_matriz,
                         'id_limite' => $id_limite,
                         'fecha_muestreo' => ($fecha_muestreo != null) ? date('Y-m-d H:i:s', strtotime($fecha_muestreo)) : null,
                         'fecha_prevista_entrega' => ($fecha_prevista_entrega != null) ? date('Y-m-d H:i:s', strtotime($fecha_prevista_entrega)) : null,

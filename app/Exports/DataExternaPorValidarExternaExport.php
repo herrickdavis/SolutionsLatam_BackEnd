@@ -61,6 +61,9 @@ class DataExternaPorValidarExternaExport implements FromCollection, WithHeadings
             unset($clonedItem->id_empresa_contratante);
             unset($clonedItem->id_empresa_solicitante);
             unset($clonedItem->id_parametro);
+
+            $clonedItem->fecha_muestreo = \Carbon\Carbon::createFromFormat('Y-m-d', $clonedItem->fecha_muestreo)
+                                                  ->format('d/m/Y');
             return $clonedItem;
         });
     }

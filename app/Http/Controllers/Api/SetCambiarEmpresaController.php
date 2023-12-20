@@ -42,14 +42,14 @@ class SetCambiarEmpresaController extends Controller
                 $sql_matrices = DB::table('muestras AS m')
                 ->select(DB::raw(
                     "CAST(CASE 
-                    WHEN gm.nombre_grupo_matriz is null then CONCAT('998',mx.id) else CONCAT('999',gm.id) end AS UNSIGNED) as id,
-                    CASE
-                    WHEN gm.nombre_grupo_matriz is null then mx.nombre_matriz else gm.nombre_grupo_matriz end as nombre_matriz"
+                        WHEN mx.id is null then '0' else mx.id END AS UNSIGNED) as id,
+                        CASE
+                        WHEN mx.id is null then 'Otros' else mx.nombre_matriz end as nombre_matriz"
                 ))
-                ->leftjoin('matrices AS mx', 'mx.id', '=', 'm.id_matriz')
-                ->leftjoin('matriz_grupo_matrices AS mgm', 'mgm.id_matriz', '=', 'm.id_matriz')
-                ->leftjoin('grupo_matrices AS gm', 'gm.id', '=', 'mgm.id_grupo_matriz')
-                ->orderBy('mx.nombre_matriz', 'ASC')->distinct();
+                ->leftjoin('matrices_v2 AS mx', 'mx.id', '=', 'm.id_matriz_v2')
+                //->leftjoin('matriz_grupo_matrices AS mgm', 'mgm.id_matriz', '=', 'm.id_matriz')
+                //->leftjoin('grupo_matrices AS gm', 'gm.id', '=', 'mgm.id_grupo_matriz')
+                ->orderBy('nombre_matriz', 'ASC')->distinct();
 
                 $sql_matrices = filtroMuestrasQuery($sql_matrices,$usuario);
 
