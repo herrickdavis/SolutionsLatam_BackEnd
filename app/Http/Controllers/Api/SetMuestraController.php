@@ -303,11 +303,20 @@ class SetMuestraController extends Controller
                     ['id' => 27],//Le asigano una matriz por defecto ya que no se utilizara este campo nuevamente
                     ['nombre_matriz' => 'Otros'] // se utilizara matriz v2
                 );
-                //Revisar si llega como 0 dejarlo null
-                $sql_matriz = MatrizV2::updateOrCreate(
-                    ['id' => $id_matriz],
-                    ['nombre_matriz' => $nombre_matriz]
-                );
+                
+                $id_matriz = (int) $id_matriz;
+
+                // Revisar si llega como 0 dejarlo null
+                if ($id_matriz === 0) {
+                    $id_matriz = null;
+                }
+                
+                if ($id_matriz !== null) {
+                    $sql_matriz = MatrizV2::updateOrCreate(
+                        ['id' => $id_matriz],
+                        ['nombre_matriz' => $nombre_matriz]
+                    );
+                }
                 
                 if ($historico != 'S') {
                     $sql_tipo_muestra = TipoMuestras::updateOrCreate(
