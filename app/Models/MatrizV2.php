@@ -10,4 +10,6 @@ class MatrizV2 extends Model
     use HasFactory;
 
     protected $table = 'matrices_v2';
+
+    protected $guarded = [];
 }
