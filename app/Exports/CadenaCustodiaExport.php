@@ -201,9 +201,9 @@ class CadenaCustodiaExport
                     while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
                         $cellValue = $sheet->getCell($col . $row)->getValue();
                         if (preg_match('/\[BUCLE\]\[.*?\]/', $cellValue)) {
-                            if(count($info) > $contador2 + 1) {
+                            if(count($info) >= $contador2 + 1) {
                                 if($tag_inicio) {
-                                    $contador2++;
+                                    $contador2++;                                
                                 }
                                 $tag_inicio = true;
                             } 
@@ -211,7 +211,7 @@ class CadenaCustodiaExport
                                 $tag = true;
                             }
                         }
-                        if (preg_match('/\[BUCLE\]\[.*?\]/', $cellValue) && $tag) {
+                        if ((preg_match('/\[BUCLE\]\[.*?\]/', $cellValue)) && $tag) {
                             break;
                         }
                         
@@ -247,16 +247,16 @@ class CadenaCustodiaExport
         }
 
         #Recorro y reemplazo
-        $contador = 0;
-        $tag_inicio = false;
         for ($i=0; $i < $num_hojas_totales; $i++) {
+            $contador = 0;
+            $tag_inicio = false;
             $tag = false;
             $sheet = $spreadsheet->getSheet($i);
             for ($row = 1; $row <= $highestRow; $row++) {                
                 $col = 'A';
                 while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
                     $cellValue = $sheet->getCell($col . $row)->getValue();
-                    $patron = '/^\[.*\]$/';
+                    $patron = "/\[([^\]]*)\]/";
                     if (preg_match('/\[BUCLE\]\[.*?\]/', $cellValue)) {
                         if(count($info) >= $contador + 1) {
                             if($tag_inicio) {
@@ -276,7 +276,6 @@ class CadenaCustodiaExport
                         $cellValue = str_replace("[BUCLE]","",$cellValue);
                         preg_match_all("/\[([^\]]*)\]/", $cellValue, $matches);
                         $newCellValue = $cellValue;
-                        //dd($contador); N: [NORTE]
                         if (!empty($matches[1])) {
                             foreach ($matches[1] as $texto) {
                                 // Verifica si el texto entre corchetes existe como clave en el array $info
