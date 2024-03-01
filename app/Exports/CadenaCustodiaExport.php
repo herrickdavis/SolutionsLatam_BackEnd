@@ -142,16 +142,17 @@ class CadenaCustodiaExport
                     while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
                         $cellValue = $sheet->getCell($col . $row)->getValue();
                         if (preg_match('/\[BUCLE\]\[.*?\]/', $cellValue)) {
-                            if(count($info) > $contador2 + 1) {
+                            if(count($info) >= $contador2 + 1) {
                                 if($tag_inicio) {
                                     $contador2++;                                
                                 }
                                 $tag_inicio = true;
-                            } else {
+                            } 
+                            if(count($info) <= $contador2) {
                                 $tag = true;
                             }
                         }
-                        if (preg_match('/\[BUCLE\]\[.*?\]/', $cellValue) && $tag) {
+                        if ((preg_match('/\[BUCLE\]\[.*?\]/', $cellValue)) && $tag) {
                             break;
                         }
                         $texto = str_replace("[","",$cellValue);
@@ -205,7 +206,8 @@ class CadenaCustodiaExport
                                     $contador2++;
                                 }
                                 $tag_inicio = true;
-                            } else {
+                            } 
+                            if(count($info) <= $contador2) {
                                 $tag = true;
                             }
                         }
@@ -256,29 +258,41 @@ class CadenaCustodiaExport
                     $cellValue = $sheet->getCell($col . $row)->getValue();
                     $patron = '/^\[.*\]$/';
                     if (preg_match('/\[BUCLE\]\[.*?\]/', $cellValue)) {
-                        if(count($info) > $contador + 1) {
+                        if(count($info) >= $contador + 1) {
                             if($tag_inicio) {
                                 $contador++;
                             }
                             $tag_inicio = true;
-                        } else {
+                        }
+                        if(count($info) <= $contador) {
                             $tag = true;
                         }
                     }
-                    if (preg_match('/\[BUCLE\]\[.*?\]/', $cellValue) && $tag) {
+                    if ($tag) {
                         break;
                     }
 
                     if((preg_match($patron, $cellValue)) && (substr($cellValue, -strlen("_LABORATORIO]")) != "_LABORATORIO]") && (substr($cellValue, -strlen("_INSITU]")) != "_INSITU]")) {
-                        $texto = str_replace("[BUCLE]","",$cellValue);
-                        $texto = str_replace("[","",$texto);
-                        $texto = str_replace("]","",$texto);
-                        //dd($contador);
-                        if (array_key_exists($texto, $info[$contador])) {
-                            if(($info[$contador][$texto] != "None") && ($info[$contador][$texto] != Null)) {
-                                $sheet->setCellValue($col . $row, $info[$contador][$texto]);
+                        $cellValue = str_replace("[BUCLE]","",$cellValue);
+                        preg_match_all("/\[([^\]]*)\]/", $cellValue, $matches);
+                        $newCellValue = $cellValue;
+                        //dd($contador); N: [NORTE]
+                        if (!empty($matches[1])) {
+                            foreach ($matches[1] as $texto) {
+                                // Verifica si el texto entre corchetes existe como clave en el array $info
+                                if (array_key_exists($texto, $info[$contador])) {
+                                    if (($info[$contador][$texto] != "None") && ($info[$contador][$texto] != null)) {
+                                        // Reemplaza cada coincidencia del texto entre corchetes con su valor correspondiente en $info
+                                        $pattern = '/' . preg_quote("[$texto]", '/') . '/';
+                                        $replacement = $info[$contador][$texto];
+                                        $newCellValue = preg_replace($pattern, $replacement, $newCellValue);
+                                    }
+                                }
                             }
                         }
+                    
+                        // Establece el nuevo valor de la celda con todos los reemplazos realizados
+                        $sheet->setCellValue($col . $row, $newCellValue);
                     }
                     $col = $this->sumarLetra($col);
                 }
