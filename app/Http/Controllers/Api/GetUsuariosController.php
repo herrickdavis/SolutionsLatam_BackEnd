@@ -62,17 +62,34 @@ class GetUsuariosController extends Controller
     public function show($id)
     {
         $usuarios = DB::table('users as u')
+                    ->select(DB::raw(
+                        "
+                        u.name as name,
+                        u.email as email,
+                        u.id_empresa as id_empresa,
+                        u.id_rol as id_rol,
+                        u.idioma as idioma,
+                        u.data_campo as data_campo,
+                        u.id_region as id_region,
+                        u.ver_empresa_sol as ver_empresa_sol,
+                        u.ver_contacto_sol as ver_contacto_sol,
+                        u.ver_contacto_con as ver_contacto_con,
+                        u.ver_empresa_con as ver_empresa_con,
+                        ue.id_empresa as id_empresas,
+                        ue.activo as ue_activo
+                        "
+                    ))
                     ->leftJoin('rols as r', 'r.id', '=', 'u.id_rol')
                     ->leftJoin('usuario_empresas as ue', 'ue.id_usuario', '=', 'u.id')
                     ->where('u.id', $id)
                     ->where('u.activo', 'S')
-                    ->where('ue.activo','S')
                     ->get();
-        
         foreach ($usuarios as $value) {
             $rpta['nombre'] = $value->name;
             $rpta['email'] = $value->email;
-            $rpta['id_empresas'][] = $value->id_empresa;
+            if($value->ue_activo == 'S') {
+                $rpta['id_empresas'][] = $value->id_empresas;
+            }
             $rpta['id_rol'] = $value->id_rol;
             $rpta['idioma'] = $value->idioma;
             $rpta['data_campo'] = $value->data_campo;
@@ -81,6 +98,9 @@ class GetUsuariosController extends Controller
             $rpta['ver_contacto_sol'] = $value->ver_contacto_sol;
             $rpta['ver_empresa_con'] = $value->ver_empresa_con;
             $rpta['ver_contacto_con'] = $value->ver_contacto_con;
+        }
+        if(!isset($rpta['id_empresas'])) {
+            $rpta['id_empresas'][] = $value->id_empresa;
         }
 
         return $rpta;
