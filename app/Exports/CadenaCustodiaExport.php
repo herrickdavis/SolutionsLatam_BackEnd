@@ -4,6 +4,8 @@ namespace App\Exports;
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
 class CadenaCustodiaExport
 {    
@@ -25,10 +27,27 @@ class CadenaCustodiaExport
         $spreadsheet = IOFactory::load(storage_path('app/'.$this->ruta_documento));
         // Obtiene la primera hoja en el archivo (ajusta esto si necesitas trabajar con múltiples hojas)
         $worksheet = $spreadsheet->getActiveSheet();
+        $cellStyle = $worksheet->getStyle('A8');
+        $font = $cellStyle->getFont();
+        $fill = $cellStyle->getFill();
+        $border = $cellStyle->getBorders();
+        $alignment = $cellStyle->getAlignment();
 
+        $styleDetails = sprintf(
+            "Font: %s, Size: %s, Fill Type: %s, Fill Color: %s, Horizontal Alignment: %s",
+            $font->getName(),
+            $font->getSize(),
+            $fill->getFillType(),
+            $fill->getStartColor()->getARGB(),
+            $fill->getStartColor()->getRGB(),
+            $alignment->getHorizontal()
+        );
+
+        \Log::info($styleDetails);
         $highestRow = $worksheet->getHighestDataRow();
         $highestColumn = $worksheet->getHighestDataColumn();
-        
+        $highestColumnIndex = Coordinate::columnIndexFromString($highestColumn);
+
         $info = $this->info;
         $parametros_laboratorio = $this->parametros_laboratorio;
         $parametros_in_situ = $this->parametros_in_situ;
@@ -123,6 +142,25 @@ class CadenaCustodiaExport
             $clonedWorksheet->setTitle($activeSheetName."(".$i.")");
             $spreadsheet->addSheet($clonedWorksheet);
         }
+        /*for ($i = 1; $i < $num_hojas_totales; $i++) {
+            // Crea una nueva hoja en blanco
+            $newWorksheet = new Worksheet($spreadsheet, $worksheet->getTitle() . " (" . $i . ")");
+            $spreadsheet->addSheet($newWorksheet, $i);
+            $spreadsheet->setActiveSheetIndex($i);
+        
+            // Copia el contenido y los estilos de cada celda
+            for ($row = 1; $row <= $highestRow; ++$row) {
+                for ($col = 1; $col <= $highestColumnIndex; ++$col) {
+                    $cellCoordinate = Coordinate::stringFromColumnIndex($col) . $row;
+                    $cellValue = $worksheet->getCell($cellCoordinate)->getValue();
+                    $cellStyle = $worksheet->getStyle($cellCoordinate);
+        
+                    // Establece el valor y el estilo en la nueva hoja
+                    $newWorksheet->setCellValue($cellCoordinate, $cellValue);
+                    $newWorksheet->duplicateStyle($cellStyle, $cellCoordinate);
+                }
+            }
+        }*/
 
         #Laboratorio
         $patron = '/^\[.*\]$/';
@@ -247,67 +285,76 @@ class CadenaCustodiaExport
         }
 
         #Recorro y reemplazo
-        for ($i=0; $i < $num_hojas_totales; $i++) {
-            $contador = 0;
-            $tag_inicio = false;
-            $tag = false;
-            $sheet = $spreadsheet->getSheet($i);
-            for ($row = 1; $row <= $highestRow; $row++) {                
-                $col = 'A';
-                while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
-                    $cellValue = $sheet->getCell($col . $row)->getValue();
-                    $patron = "/\[([^\]]*)\]/";
-                    if (preg_match('/\[BUCLE\]\[.*?\]/', $cellValue)) {
-                        if(count($info) >= $contador + 1) {
-                            if($tag_inicio) {
-                                $contador++;
+        //$muestras = array_slice($info, ($n)*$contador_muestras);
+        //\Log::info($info);
+        for ($m=0; $m < $cantidad_hojas_muestras + 1; $m++) {
+            $hoja = $m;
+            $array_muestras = array_slice($info, ($m)*$contador_muestras);
+            for ($i=0; $i < $num_hojas_parametros + 1; $i++) {
+                $contador = 0;
+                $tag_inicio = false;
+                $tag = false;
+                //\Log::info($array_muestras);
+                $sheet = $spreadsheet->getSheet($hoja);
+                $hoja = $hoja + $cantidad_hojas_muestras + 1;
+                for ($row = 1; $row <= $highestRow; $row++) {
+                    $col = 'A';
+                    //\Log::info($contador);
+                    while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
+                        $cellValue = $sheet->getCell($col . $row)->getValue();
+                        $patron = "/\[([^\]]*)\]/";
+                        if (preg_match('/\[BUCLE\]\[.*?\]/', $cellValue)) {
+                            if(count($array_muestras) >= $contador + 1) {
+                                if($tag_inicio) {
+                                    $contador++;
+                                }
+                                $tag_inicio = true;
                             }
-                            $tag_inicio = true;
+                            if(count($array_muestras) <= $contador) {
+                                $tag = true;
+                            }
                         }
-                        if(count($info) <= $contador) {
-                            $tag = true;
+                        if ($tag) {
+                            break;
                         }
-                    }
-                    if ($tag) {
-                        break;
-                    }
 
-                    if((preg_match($patron, $cellValue)) && (substr($cellValue, -strlen("_LABORATORIO]")) != "_LABORATORIO]") && (substr($cellValue, -strlen("_INSITU]")) != "_INSITU]")) {
-                        $cellValue = str_replace("[BUCLE]","",$cellValue);
-                        preg_match_all("/\[([^\]]*)\]/", $cellValue, $matches);
-                        $newCellValue = $cellValue;
-                        if (!empty($matches[1])) {
-                            foreach ($matches[1] as $texto) {
-                                // Verifica si el texto entre corchetes existe como clave en el array $info
-                                if (array_key_exists($texto, $info[$contador])) {
-                                    if (($info[$contador][$texto] != "None") && ($info[$contador][$texto] != null)) {
-                                        // Reemplaza cada coincidencia del texto entre corchetes con su valor correspondiente en $info
-                                        $pattern = '/' . preg_quote("[$texto]", '/') . '/';
-                                        $replacement = $info[$contador][$texto];
-                                        $newCellValue = preg_replace($pattern, $replacement, $newCellValue);
+                        if((preg_match($patron, $cellValue)) && (substr($cellValue, -strlen("_LABORATORIO]")) != "_LABORATORIO]") && (substr($cellValue, -strlen("_INSITU]")) != "_INSITU]")) {
+                            $cellValue = str_replace("[BUCLE]","",$cellValue);
+                            preg_match_all("/\[([^\]]*)\]/", $cellValue, $matches);
+                            $newCellValue = $cellValue;
+                            if (!empty($matches[1])) {
+                                foreach ($matches[1] as $texto) {
+                                    // Verifica si el texto entre corchetes existe como clave en el array $info
+                                    if (array_key_exists($texto, $array_muestras[$contador])) {
+                                        if (($array_muestras[$contador][$texto] != "None") && ($array_muestras[$contador][$texto] != null)) {
+                                            // Reemplaza cada coincidencia del texto entre corchetes con su valor correspondiente en $info
+                                            $pattern = '/' . preg_quote("[$texto]", '/') . '/';
+                                            $replacement = $array_muestras[$contador][$texto];
+                                            $newCellValue = preg_replace($pattern, $replacement, $newCellValue);
+                                        }
                                     }
                                 }
                             }
+                        
+                            // Establece el nuevo valor de la celda con todos los reemplazos realizados
+                            $sheet->setCellValue($col . $row, $newCellValue);
                         }
-                    
-                        // Establece el nuevo valor de la celda con todos los reemplazos realizados
-                        $sheet->setCellValue($col . $row, $newCellValue);
+                        $col = $this->sumarLetra($col);
                     }
-                    $col = $this->sumarLetra($col);
                 }
-            }
 
-            //Busco y dejo en blanco los campos [] no rellenados        
-            for ($row = 1; $row <= $highestRow; $row++) {
-                $col = 'A';
-                while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
-                    $cellValue = $sheet->getCell($col . $row)->getValue();
-                    $patron = '/^\[.*\]$/';
-                    if(preg_match($patron, $cellValue)) {                    
-                        $sheet->setCellValue($col . $row, "");
+                //Busco y dejo en blanco los campos [] no rellenados        
+                for ($row = 1; $row <= $highestRow; $row++) {
+                    $col = 'A';
+                    while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
+                        $cellValue = $sheet->getCell($col . $row)->getValue();
+                        $patron = '/^\[.*\]$/';
+                        if(preg_match($patron, $cellValue)) {                    
+                            $sheet->setCellValue($col . $row, "");
+                        }
+                        
+                        $col = $this->sumarLetra($col);
                     }
-                    
-                    $col = $this->sumarLetra($col);
                 }
             }
         }

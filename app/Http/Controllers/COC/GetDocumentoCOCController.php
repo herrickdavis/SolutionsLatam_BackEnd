@@ -35,7 +35,7 @@ class GetDocumentoCOCController extends Controller
         $archivo = DB::table('cadena_plantillas')->where('id', $id_documento)->first();
 
         //Escribir el blob a un archivo
-        $nombreArchivo = 'public/excel_' . $id_documento . '.xlsx';
+        $nombreArchivo = 'public/excel_' . $id_documento . '.'. $archivo->extension;
         Storage::disk('local')->put($nombreArchivo, $archivo->plantilla); 
 
         //Leemos Datos
