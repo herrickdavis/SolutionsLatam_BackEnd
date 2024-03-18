@@ -88,6 +88,13 @@ use App\Http\Controllers\DataExterna\GetMuestrasDataExternaController;
 use App\Http\Controllers\DataExterna\SetMuestrasDataExternaController;
 use App\Http\Controllers\DataExterna\GetExcelDataExternaPorValidarController;
 use App\Http\Controllers\DataExterna\MuestraExternaController;
+
+//Telemetria
+use App\Http\Controllers\Telemetria\SetDataController;
+use App\Http\Controllers\Telemetria\GetInfoTelController;
+use App\Http\Controllers\Telemetria\GetDataTelController;
+
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -197,6 +204,16 @@ Route::middleware('auth:sanctum')->post('/DataExternaCrearProyecto', [MuestraExt
 
 //Route::middleware('auth:sanctum')->apiResource('GetCambiarPassword', GetCambiarPasswordController::class);
 
+//Telemetria
+Route::apiResource('SetDataTelemetria', SetDataController::class);
+Route::apiResource('GetInfoTelemetria', GetInfoTelController::class);
+Route::apiResource('GetDataTelemetria', GetDataTelController::class);
+Route::post('getLastSample', [GetDataTelController::class,'getLastSample']);
+Route::post('getStationByName', [GetDataTelController::class,'getStationByName']);
+Route::post('getAllSample', [GetDataTelController::class,'getAllSample']);
+Route::post('getAllParameter', [GetDataTelController::class,'getAllParameter']);
+Route::post('getAllUnit', [GetDataTelController::class,'getAllUnit']);
+Route::post('getAllAbreviatura', [GetDataTelController::class,'getAllAbreviatura']);
 
 //######## API PARA CLIENTE
 //Route::middleware('auth:sanctum')->apiResource('Muestras', MuestrasController::class);
