@@ -43,7 +43,6 @@ class CadenaCustodiaExport
             $alignment->getHorizontal()
         );
 
-        \Log::info($styleDetails);
         $highestRow = $worksheet->getHighestDataRow();
         $highestColumn = $worksheet->getHighestDataColumn();
         $highestColumnIndex = Coordinate::columnIndexFromString($highestColumn);
@@ -59,6 +58,7 @@ class CadenaCustodiaExport
         $inicio_parametros_in_situ = '';
         #Recorro toda la plantilla y busco la cantidad de laboratorio e insitu
         $flag_laboratorio = false;
+        $texto_nombre_laboratorio = '';
         for ($row = 1; $row <= $highestRow; $row++) {
             $col = 'A';
             while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
@@ -82,6 +82,7 @@ class CadenaCustodiaExport
             }
         }
         #insitu
+        $texto_nombre_insitu = '';
         $flag_insitu = false;
         for ($row = 1; $row <= $highestRow; $row++) {
             $col = 'A';
@@ -285,8 +286,6 @@ class CadenaCustodiaExport
         }
 
         #Recorro y reemplazo
-        //$muestras = array_slice($info, ($n)*$contador_muestras);
-        //\Log::info($info);
         for ($m=0; $m < $cantidad_hojas_muestras + 1; $m++) {
             $hoja = $m;
             $array_muestras = array_slice($info, ($m)*$contador_muestras);
@@ -294,12 +293,10 @@ class CadenaCustodiaExport
                 $contador = 0;
                 $tag_inicio = false;
                 $tag = false;
-                //\Log::info($array_muestras);
                 $sheet = $spreadsheet->getSheet($hoja);
                 $hoja = $hoja + $cantidad_hojas_muestras + 1;
                 for ($row = 1; $row <= $highestRow; $row++) {
                     $col = 'A';
-                    //\Log::info($contador);
                     while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
                         $cellValue = $sheet->getCell($col . $row)->getValue();
                         $patron = "/\[([^\]]*)\]/";
