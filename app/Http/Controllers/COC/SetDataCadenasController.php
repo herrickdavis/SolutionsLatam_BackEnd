@@ -38,7 +38,7 @@ class SetDataCadenasController extends Controller
             foreach ($insertar as &$value) {
                 if($value['fecha_muestreo'] != null) {
                     try {
-                        $fechaCarbon = Carbon::createFromFormat('d/m/Y', $value['fecha_muestreo']);
+                        $fechaCarbon = Carbon::createFromFormat('Y/m/d', $value['fecha_muestreo']);
                         $fechaFormateada = $fechaCarbon->toDateString();
                         $value['fecha_muestreo'] = $fechaFormateada;
                     } catch (\Throwable $th) {
