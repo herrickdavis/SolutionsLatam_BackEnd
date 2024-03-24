@@ -41,7 +41,6 @@ class UpdateMatricesV2Controller extends Controller
             return response()->json(['success' => true, 'message' => 'Actualización exitosa.']);
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::info($e);
             return response()->json(['success' => false, 'message' => 'Error al actualizar.'], 404);
         }
     }
