@@ -94,5 +94,6 @@ return [
   'diferente_de' => 'diferente de',
   'mayor_que' => 'mayor que',
   'menor_que' => 'menor que',
-  'alias_estacion' => 'Alias Estación'
+  'alias_estacion' => 'Alias Estación',
+  'Estado_Muestra' => 'Estado Muestra'
 ];

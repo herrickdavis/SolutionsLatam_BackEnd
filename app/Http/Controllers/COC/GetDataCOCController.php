@@ -68,6 +68,9 @@ class GetDataCOCController extends Controller
                     case strtolower(trans('texto.Tipo_Muestra')):
                         $cadenas = $this->filtros($cadenas, 'c.tipo_muestra', $condicion, $valor);
                         break;
+                    case strtolower(trans('texto.Estado_Muestra')):
+                        $cadenas = $this->filtros($cadenas, 'c.estado_muestra', $condicion, $valor);
+                        break;
                 }
             }
         }
@@ -85,6 +88,7 @@ class GetDataCOCController extends Controller
             $pre_resultado['data'][] = $cadena->fecha_muestreo;
             $pre_resultado['data'][] = substr($cadena->hora_muestreo, 0, 5);
             $pre_resultado['data'][] = $cadena->tipo_muestra;
+            $pre_resultado['data'][] = $cadena->estado_muestra;
             $pre_resultado['render']['color'] = null;
             $pre_resultado['render']['flag'] = false;
             $pre_resultado['render']['con_documentos'] = false;
@@ -100,8 +104,9 @@ class GetDataCOCController extends Controller
             trans('texto.Fecha_Muestreo'),
             trans('texto.Hora_Muestreo'),
             trans('texto.Tipo_Muestra'),
+            trans('texto.Estado_Muestra'),
         ];
-        $rpta['format'] = ['', '', '', '', '', '', ''];
+        $rpta['format'] = ['', '', '', '', '', '', '', ''];
 
         $rpta['pagina']['current_page'] = $cadenas->currentPage();
         $rpta['pagina']['data'] = $resultado;
