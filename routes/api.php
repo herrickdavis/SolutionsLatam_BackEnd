@@ -214,6 +214,10 @@ Route::post('getAllSample', [GetDataTelController::class,'getAllSample']);
 Route::post('getAllParameter', [GetDataTelController::class,'getAllParameter']);
 Route::post('getAllUnit', [GetDataTelController::class,'getAllUnit']);
 Route::post('getAllAbreviatura', [GetDataTelController::class,'getAllAbreviatura']);
+Route::post('getProjectByName', [GetDataTelController::class,'getProjectByName']);
+Route::post('getParameters', [GetDataTelController::class,'getParameters']);
+Route::post('getAllGroup', [GetDataTelController::class,'getAllGroup']);
+Route::post('getAllStation', [GetDataTelController::class,'getAllStation']);
 
 //######## API PARA CLIENTE
 //Route::middleware('auth:sanctum')->apiResource('Muestras', MuestrasController::class);

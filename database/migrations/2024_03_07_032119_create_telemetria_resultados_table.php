@@ -25,6 +25,8 @@ class CreateTelemetriaResultadosTable extends Migration
             $table->foreign('unidad_id')->references('id')->on('telemetria_unidads');
             $table->foreign('abreviatura_id')->references('id')->on('telemetria_abreviatura_procesamientos');
             $table->timestamps();
+
+            $table->unique(['muestra_id', 'parametro_id'], 'muestra_id_parametro_id_unique');
         });
     }
 
