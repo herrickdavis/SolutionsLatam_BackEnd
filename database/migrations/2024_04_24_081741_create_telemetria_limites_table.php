@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateTelemetriaParametrosTable extends Migration
+class CreateTelemetriaLimitesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,9 +13,9 @@ class CreateTelemetriaParametrosTable extends Migration
      */
     public function up()
     {
-        Schema::create('telemetria_parametros', function (Blueprint $table) {
+        Schema::create('telemetria_limites', function (Blueprint $table) {
             $table->id();
-            $table->string('nombre_parametro',50)->unique();
+            $table->string('nombre_limite',100);
             $table->timestamps();
         });
     }
@@ -27,6 +27,6 @@ class CreateTelemetriaParametrosTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('telemetria_parametros');
+        Schema::dropIfExists('telemetria_limites');
     }
 }

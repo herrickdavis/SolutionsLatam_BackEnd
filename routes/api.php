@@ -94,6 +94,8 @@ use App\Http\Controllers\Telemetria\SetDataController;
 use App\Http\Controllers\Telemetria\GetInfoTelController;
 use App\Http\Controllers\Telemetria\GetDataTelController;
 
+//Notificacion
+use App\Http\Controllers\Api\NotificacionesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -204,6 +206,9 @@ Route::middleware('auth:sanctum')->post('/DataExternaCrearProyecto', [MuestraExt
 
 //Route::middleware('auth:sanctum')->apiResource('GetCambiarPassword', GetCambiarPasswordController::class);
 
+//Notificaciones
+Route::apiResource('Notificaciones', NotificacionesController::class);
+
 //Telemetria
 Route::apiResource('SetDataTelemetria', SetDataController::class);
 Route::apiResource('GetInfoTelemetria', GetInfoTelController::class);
@@ -211,6 +216,7 @@ Route::apiResource('GetDataTelemetria', GetDataTelController::class);
 Route::post('getLastSample', [GetDataTelController::class,'getLastSample']);
 Route::post('getStationByName', [GetDataTelController::class,'getStationByName']);
 Route::post('getAllSample', [GetDataTelController::class,'getAllSample']);
+Route::post('getAllSampleID', [GetDataTelController::class,'getAllSampleID']);
 Route::post('getAllParameter', [GetDataTelController::class,'getAllParameter']);
 Route::post('getAllUnit', [GetDataTelController::class,'getAllUnit']);
 Route::post('getAllAbreviatura', [GetDataTelController::class,'getAllAbreviatura']);
@@ -218,6 +224,12 @@ Route::post('getProjectByName', [GetDataTelController::class,'getProjectByName']
 Route::post('getParameters', [GetDataTelController::class,'getParameters']);
 Route::post('getAllGroup', [GetDataTelController::class,'getAllGroup']);
 Route::post('getAllStation', [GetDataTelController::class,'getAllStation']);
+Route::post('getAllSampleByStation', [GetDataTelController::class,'getAllSampleByStation']);
+Route::post('getDataWindRose', [GetDataTelController::class,'getDataWindRose']);
+Route::post('setLimites', [SetDataController::class,'setLimites']);
+Route::post('getAllLimites', [GetDataTelController::class,'getAllLimites']);
+Route::post('setGrupoParametros', [SetDataController::class,'setGrupoParametros']);
+
 
 //######## API PARA CLIENTE
 //Route::middleware('auth:sanctum')->apiResource('Muestras', MuestrasController::class);

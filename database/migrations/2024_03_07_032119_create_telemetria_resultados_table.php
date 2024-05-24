@@ -20,10 +20,12 @@ class CreateTelemetriaResultadosTable extends Migration
             $table->string("resultado",15)->nullable();
             $table->foreignId('unidad_id')->nullable();
             $table->foreignId('abreviatura_id')->nullable();
+            $table->foreignId('estado_id')->nullable();
             $table->foreign('muestra_id')->references('id')->on('telemetria_muestras');
             $table->foreign('parametro_id')->references('id')->on('telemetria_parametros');
             $table->foreign('unidad_id')->references('id')->on('telemetria_unidads');
             $table->foreign('abreviatura_id')->references('id')->on('telemetria_abreviatura_procesamientos');
+            $table->foreign('estado_id')->references('id')->on('telemetria_estado_resultados');
             $table->timestamps();
 
             $table->unique(['muestra_id', 'parametro_id'], 'muestra_id_parametro_id_unique');

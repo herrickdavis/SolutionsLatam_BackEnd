@@ -15,8 +15,11 @@ class CreateTelemetriaGrupoParametrosTable extends Migration
     {
         Schema::create('telemetria_grupo_parametros', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('empresa_id');
             $table->string('nombre_grupo_parametro',100);
+            $table->enum('estado',['S','N'])->default('S');
             $table->timestamps();
+            $table->foreign('empresa_id')->references('id')->on('empresas');
         });
     }
 

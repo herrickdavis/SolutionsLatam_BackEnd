@@ -17,6 +17,7 @@ class CreateTelemetriaParametroGrupoParametrosTable extends Migration
             $table->id();
             $table->foreignId('grupo_parametro_id');
             $table->foreignId('parametro_id');
+            $table->enum('estado',['S','N'])->default('S');
             $table->timestamps();
             $table->index('grupo_parametro_id');
             $table->foreign('grupo_parametro_id')->references('id')->on('telemetria_grupo_parametros');
