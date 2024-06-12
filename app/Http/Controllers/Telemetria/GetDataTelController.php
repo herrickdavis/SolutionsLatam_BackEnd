@@ -38,13 +38,13 @@ class GetDataTelController extends Controller
     public function store(Request $request)
     {
         set_time_limit(300);
-        \Log::info($request->user());
         if($request->user()->id_empresa != '947') {
             return response()->json(['message' => 'Sin autorizacion'], 400);
         }
         $estacion = $request->nombre_estacion;
         $id_parametro = $request->id_parametros;
         $id_limite = $request->id_limite;
+        $tipo_data = $request->tipo_data;
         try {
             $query = DB::table('telemetria_resultados as tr')
                     ->select(DB::raw(
@@ -57,12 +57,14 @@ class GetDataTelController extends Controller
                     ->join('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
                     ->join('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
                     ->join('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
-                    ->where(function($query) {
-                        $query->where('tr.estado_id', '!=', '3')
-                              ->orWhereNull('tr.estado_id');
-                    })
                     ->whereIn('te.nombre_estacion', $estacion)
                     ->whereIn('tr.parametro_id', $id_parametro);
+            if($tipo_data == 1){
+                $query->where(function($query) {
+                    $query->where('tr.estado_id', '!=', '3')
+                          ->orWhereNull('tr.estado_id');
+                });
+            }
             if ($id_limite) {
                 $query->leftJoin('telemetria_limite_parametros as tlp', function($join) use ($id_limite) {
                     $join->on('tlp.parametro_id', '=', 'tr.parametro_id')
