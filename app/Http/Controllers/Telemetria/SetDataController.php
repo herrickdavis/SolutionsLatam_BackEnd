@@ -181,6 +181,11 @@ class SetDataController extends Controller
         return response()->json($speach.$nombre_grupo_parametro);
     }
 
+    public function setValidacionResultados(Request $request)
+    {
+
+    }
+
     function limpiarCaracteresEspeciales($cadena) {
         // Reemplaza caracteres especiales con su equivalente sin acentos
         $cadena = iconv('UTF-8', 'ASCII//TRANSLIT', $cadena);

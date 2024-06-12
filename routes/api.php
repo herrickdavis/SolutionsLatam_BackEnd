@@ -212,7 +212,7 @@ Route::apiResource('Notificaciones', NotificacionesController::class);
 //Telemetria
 Route::apiResource('SetDataTelemetria', SetDataController::class);
 Route::apiResource('GetInfoTelemetria', GetInfoTelController::class);
-Route::apiResource('GetDataTelemetria', GetDataTelController::class);
+Route::middleware('auth:sanctum')->apiResource('GetDataTelemetria', GetDataTelController::class);
 Route::post('getLastSample', [GetDataTelController::class,'getLastSample']);
 Route::post('getStationByName', [GetDataTelController::class,'getStationByName']);
 Route::post('getAllSample', [GetDataTelController::class,'getAllSample']);
@@ -221,13 +221,16 @@ Route::post('getAllParameter', [GetDataTelController::class,'getAllParameter']);
 Route::post('getAllUnit', [GetDataTelController::class,'getAllUnit']);
 Route::post('getAllAbreviatura', [GetDataTelController::class,'getAllAbreviatura']);
 Route::post('getProjectByName', [GetDataTelController::class,'getProjectByName']);
-Route::post('getParameters', [GetDataTelController::class,'getParameters']);
-Route::post('getAllGroup', [GetDataTelController::class,'getAllGroup']);
-Route::post('getAllStation', [GetDataTelController::class,'getAllStation']);
+Route::middleware('auth:sanctum')->post('getParameters', [GetDataTelController::class,'getParameters']);
+Route::middleware('auth:sanctum')->post('getAllGroup', [GetDataTelController::class,'getAllGroup']);
+Route::middleware('auth:sanctum')->post('getAllStation', [GetDataTelController::class,'getAllStation']);
 Route::post('getAllSampleByStation', [GetDataTelController::class,'getAllSampleByStation']);
 Route::post('getDataWindRose', [GetDataTelController::class,'getDataWindRose']);
-Route::post('setLimites', [SetDataController::class,'setLimites']);
-Route::post('getAllLimites', [GetDataTelController::class,'getAllLimites']);
+Route::post('getResultadoPorValidar', [GetDataTelController::class,'getResultadoPorValidar']);
+Route::post('getCriterioValidacion', [GetDataTelController::class,'getCriterioValidacion']);
+Route::post('getParametroByName', [GetDataTelController::class,'getParametroByName']);
+Route::middleware('auth:sanctum')->post('setLimites', [SetDataController::class,'setLimites']);
+Route::middleware('auth:sanctum')->post('getAllLimites', [GetDataTelController::class,'getAllLimites']);
 Route::post('setGrupoParametros', [SetDataController::class,'setGrupoParametros']);
 
 
