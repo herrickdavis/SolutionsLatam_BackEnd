@@ -186,6 +186,72 @@ class SetDataController extends Controller
 
     }
 
+    function updateEstadoResultado(Request $request)
+    {
+        $resultados = $request->all();
+
+        // Iniciar una transacción
+        DB::beginTransaction();
+
+        try {
+            DB::table('telemetria_id_cambios')->truncate();
+            DB::table('telemetria_id_cambios')->insert($resultados);
+            DB::statement('
+                UPDATE telemetria_resultados tr
+                JOIN telemetria_id_cambios tc ON tr.muestra_id = tc.id
+                SET tr.estado_id = tc.estado
+            ');
+
+            // Confirmar la transacción
+            DB::commit();
+
+            return response()->json(['message' => 'Actualización exitosa'], 200);
+        } catch (\Exception $e) {
+            report($e);
+            DB::rollBack();
+            return response()->json(['message' => 'Error en la actualización', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    function updateEstadoNullResultado(Request $request)
+    {
+        set_time_limit(2400);
+        DB::beginTransaction();
+        try {
+            DB::statement('
+                UPDATE telemetria_resultados
+                SET estado_id = 3
+                WHERE (estado_id IS NULL OR estado_id = 1) AND resultado IS NULL
+            ');
+
+            DB::commit();
+
+            return response()->json(['message' => 'Actualización exitosa'], 200);
+        } catch (\Exception $e) {
+            report($e);
+            DB::rollBack();
+            return response()->json(['message' => 'Error en la actualización', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    function setNotificaciones(Request $request)
+    {
+        set_time_limit(2400);
+        $resultados = $request->all();
+        DB::beginTransaction();
+        try {
+            DB::table('notificacions')->insert($resultados);
+
+            DB::commit();
+
+            return response()->json(['message' => 'Actualización exitosa'], 200);
+        } catch (\Exception $e) {
+            report($e);
+            DB::rollBack();
+            return response()->json(['message' => 'Error en la actualización', 'error' => $e->getMessage()], 500);
+        }
+    }
+
     function limpiarCaracteresEspeciales($cadena) {
         // Reemplaza caracteres especiales con su equivalente sin acentos
         $cadena = iconv('UTF-8', 'ASCII//TRANSLIT', $cadena);

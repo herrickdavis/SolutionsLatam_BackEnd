@@ -15,12 +15,11 @@ class TipoNotificacionSeeder extends Seeder
     {
         DB::table('tipo_notificacions')->insert([
             'id' => 1,
-            'nombre_tipo_notificacion' => 'Condiciones de operatividad',
+            'nombre_tipo_notificacion' => 'Condiciones de Operación',
         ]);
         DB::table('tipo_notificacions')->insert([
             'id' => 2,
             'nombre_tipo_notificacion' => 'Validación de dato',
-        ]);
-        
+        ]); 
     }
 }

@@ -562,13 +562,14 @@ class GetDataTelController extends Controller
         $parametro_id = $request->parametro_id;
         try {
             $resultados = DB::table('telemetria_resultados as tr')
-            ->select('tm.fecha_muestreo', 'tr.muestra_id', 'tr.resultado')
+            ->select('tm.fecha_muestreo', 'tr.muestra_id', 'te.nombre_estacion', 'tr.resultado')
             ->leftJoin('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
+            ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
             ->where(function ($query) {
                 $query->where('estado_id', '=', '1')
                     ->orWhereNull('estado_id');
             })
-            ->where('parametro_id', $parametro_id)->limit(1000)->get();    
+            ->where('parametro_id', $parametro_id)->limit(5000)->get();    
 
         } catch (Throwable $e) {
             report($e);
@@ -581,7 +582,18 @@ class GetDataTelController extends Controller
     {
         try {
             $criterios_validacion = DB::table('telemetria_criterios_validacions as tcv')
-            ->select('aplicacion')->get();
+            ->select('aplicacion','tipo_estado')->orderBy('tipo_estado', 'desc')->get();
+        } catch (Throwable $e) {
+            report($e);
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
+        return response()->json($criterios_validacion);
+    }
+    public function getAllCriterioValidacion(Request $request)
+    {
+        try {
+            $criterios_validacion = DB::table('telemetria_criterios_validacions as tcv')
+            ->orderBy('tipo_estado', 'desc')->get();
         } catch (Throwable $e) {
             report($e);
             return response()->json(['message' => $e->getMessage()], 400);

@@ -25,6 +25,5 @@ class NivelNotificacionSeeder extends Seeder
             'id' => 3,
             'nombre_nivel_notificacion' => 'Alerta',
         ]);
-
     }
 }

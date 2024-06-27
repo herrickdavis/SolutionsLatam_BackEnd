@@ -17,12 +17,14 @@ class CreateTelemetriaCriteriosValidacionsTable extends Migration
             $table->id();
             $table->foreignId('empresa_id');
             $table->foreignId('tipo_criterio');
+            $table->foreignId('tipo_estado');
             $table->string('descripcion',150);
             $table->string('variables',100);
             $table->string('criterio',150);
             $table->string('aplicacion',250);
             $table->foreign('tipo_criterio')->references('id')->on('telemetria_tipo_criterios_validacions');
             $table->foreign('empresa_id')->references('id')->on('empresas');
+            $table->foreign('tipo_estado')->references('id')->on('telemetria_estado_resultados');
             $table->timestamps();
         });
     }
@@ -34,6 +36,11 @@ class CreateTelemetriaCriteriosValidacionsTable extends Migration
      */
     public function down()
     {
+        Schema::table('telemetria_criterios_validacions', function (Blueprint $table) {
+            $table->dropForeign(['empresa_id']);
+            $table->dropForeign(['tipo_criterio']);
+            
+        });
         Schema::dropIfExists('telemetria_criterios_validacions');
     }
 }

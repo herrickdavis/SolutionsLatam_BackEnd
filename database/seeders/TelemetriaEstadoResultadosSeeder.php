@@ -20,15 +20,15 @@ class TelemetriaEstadoResultadosSeeder extends Seeder
         ]);
         DB::table('telemetria_estado_resultados')->insert([
             'id' => 2,
-            'nombre_estado' => 'Valido',
+            'nombre_estado' => 'Alerta',
         ]);
         DB::table('telemetria_estado_resultados')->insert([
             'id' => 3,
-            'nombre_estado' => 'Rechazado',
+            'nombre_estado' => 'Descarte',
         ]);
         DB::table('telemetria_estado_resultados')->insert([
             'id' => 4,
-            'nombre_estado' => 'No Válido',
+            'nombre_estado' => 'Válido',
         ]);
     }
 }

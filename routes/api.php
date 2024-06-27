@@ -232,7 +232,10 @@ Route::post('getParametroByName', [GetDataTelController::class,'getParametroByNa
 Route::middleware('auth:sanctum')->post('setLimites', [SetDataController::class,'setLimites']);
 Route::middleware('auth:sanctum')->post('getAllLimites', [GetDataTelController::class,'getAllLimites']);
 Route::post('setGrupoParametros', [SetDataController::class,'setGrupoParametros']);
-
+Route::post('updateEstadoResultado', [SetDataController::class,'updateEstadoResultado']);
+Route::post('updateEstadoNullResultado', [SetDataController::class,'updateEstadoNullResultado']);
+Route::post('getAllCriterioValidacion', [GetDataTelController::class,'getAllCriterioValidacion']);
+Route::post('setNotificaciones', [SetDataController::class,'setNotificaciones']);
 
 //######## API PARA CLIENTE
 //Route::middleware('auth:sanctum')->apiResource('Muestras', MuestrasController::class);
