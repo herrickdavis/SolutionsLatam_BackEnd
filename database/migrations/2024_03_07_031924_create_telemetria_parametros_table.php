@@ -16,7 +16,10 @@ class CreateTelemetriaParametrosTable extends Migration
         Schema::create('telemetria_parametros', function (Blueprint $table) {
             $table->id();
             $table->string('nombre_parametro',50)->unique();
+            $table->foreignId('id_tipo_parametro');
             $table->timestamps();
+            $table->index('id_tipo_parametro');
+            $table->foreign('id_tipo_parametro')->references('id')->on('telemetria_tipo_parametros');
         });
     }
 

@@ -11,6 +11,7 @@ use App\Models\TelemetriaEstacion;
 use App\Models\TelemetriaGrupoParametro;
 use App\Models\TelemetriaLimite;
 use App\Models\TelemetriaLimiteParametro;
+use App\Models\TelemetriaCriteriosValidacion;
 use App\Models\TelemetriaMuestra;
 use App\Models\TelemetriaParametroGrupoParametro;
 use App\Models\TelemetriaResultado;
@@ -241,6 +242,75 @@ class SetDataController extends Controller
         DB::beginTransaction();
         try {
             DB::table('notificacions')->insert($resultados);
+
+            DB::commit();
+
+            return response()->json(['message' => 'Actualización exitosa'], 200);
+        } catch (\Exception $e) {
+            report($e);
+            DB::rollBack();
+            return response()->json(['message' => 'Error en la actualización', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    function setCriterioValidacion(Request $request)
+    {   
+        try {
+            $id = $request->input('id');
+            \Log::info($request);
+            if ($id) {
+                $telemetriaCriteriosValidacion = TelemetriaCriteriosValidacion::find($id);
+                if (!$telemetriaCriteriosValidacion) {
+                    return response()->json(['message' => 'Registro no encontrado'], 404);
+                }
+                \Log::info($telemetriaCriteriosValidacion);
+            } else {
+                $telemetriaCriteriosValidacion = new TelemetriaCriteriosValidacion();
+            }
+            $telemetriaCriteriosValidacion->empresa_id = 947;
+            $telemetriaCriteriosValidacion->tipo_criterio = $request->input('tipo_criterio');
+            $telemetriaCriteriosValidacion->tipo_estado = $request->input('tipo_estado');
+            $telemetriaCriteriosValidacion->descripcion = $request->input('descripcion');
+            $telemetriaCriteriosValidacion->variables = $request->input('variables');
+            $telemetriaCriteriosValidacion->criterio = $request->input('criterio');
+            $telemetriaCriteriosValidacion->aplicacion = $request->input('aplicacion');
+
+            \Log::info($telemetriaCriteriosValidacion);
+        
+            $telemetriaCriteriosValidacion->save();
+            return response()->json(['message' => 'Creación Correcta'], 200);
+        } catch (\Exception $e) {
+            report($e);
+            return response()->json(['message' => 'Error en la creación', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    function setParametroTelemetria(Request $request)
+    {
+        try {
+            $attributes = [
+                'nombre_parametro' => $request->input('nombre_parametro'),
+                'id_tipo_parametro' => $request->input('id_tipo_parametro')
+            ];
+            $telemetriaParametro = TelemetriaParametro::firstOrCreate($attributes);
+            return response()->json(['message' => 'Operación exitosa', 'id' => $telemetriaParametro->id], 200);
+
+        } catch(\Exception $e) {
+            report($e);
+            return response()->json(['message' => 'Error en la operación', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    function setClearDataProcesada(Request $request){
+        DB::table('telemetria_data_procesadas')->truncate();
+    }
+
+    function setDataProcesadaTelemetria(Request $request) {
+        set_time_limit(2400);
+        $resultados = $request->all();
+        DB::beginTransaction();
+        try {
+            DB::table('telemetria_data_procesadas')->insert($resultados);
 
             DB::commit();
 

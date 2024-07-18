@@ -20,12 +20,7 @@ class TelemetriaTipoCriterioSeeder extends Seeder
 
         DB::table('telemetria_tipo_criterios_validacions')->insert([
             'id' => 2,
-            'nombre_tipo_criterio' => 'Alerta',
-        ]);
-
-        DB::table('telemetria_tipo_criterios_validacions')->insert([
-            'id' => 3,
-            'nombre_tipo_criterio' => 'Descarte',
+            'nombre_tipo_criterio' => 'Procesamiento',
         ]);
     }
 }

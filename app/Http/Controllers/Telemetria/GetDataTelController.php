@@ -43,36 +43,67 @@ class GetDataTelController extends Controller
         }
         $estacion = $request->nombre_estacion;
         $id_parametro = $request->id_parametros;
+        $id_tipo_parametro = DB::table('telemetria_parametros as tp')->where('tp.id', $id_parametro[0])->value('id_tipo_parametro');
+        \Log::info($id_tipo_parametro);
         $id_limite = $request->id_limite;
         $tipo_data = $request->tipo_data;
         try {
-            $query = DB::table('telemetria_resultados as tr')
-                    ->select(DB::raw(
-                        "tr.parametro_id as parametro_id,
-                        tp.nombre_parametro,
-                        te.nombre_estacion,
-                        tm.fecha_muestreo as fecha_muestreo,
-                        tr.resultado as resultado"
-                    ))
-                    ->join('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
-                    ->join('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
-                    ->join('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
-                    ->whereIn('te.nombre_estacion', $estacion)
-                    ->whereIn('tr.parametro_id', $id_parametro);
-            if($tipo_data == 1){
-                $query->where(function($query) {
-                    $query->where('tr.estado_id', '!=', '3')
-                          ->orWhereNull('tr.estado_id');
-                });
+            if($id_tipo_parametro == '2') {
+                $query = DB::table('telemetria_data_procesadas as tr')
+                            ->select(
+                                'tr.parametro_id as parametro_id',
+                                'tp.nombre_parametro',
+                                'te.nombre_estacion',
+                                DB::raw("concat(tr.fecha_muestreo, ' 12:00:00') as fecha_muestreo"),
+                                'tr.resultado as resultado'
+                            )
+                            ->join('telemetria_estacions as te', 'te.id', '=', 'tr.estacion_id')
+                            ->join('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
+                            ->whereIn('te.nombre_estacion', $estacion)
+                            ->whereIn('tr.parametro_id', $id_parametro);
+                if($tipo_data == 1){
+                    $query->where(function($query) {
+                        $query->where('tr.estado_id', '!=', '3')
+                            ->orWhereNull('tr.estado_id');
+                    });
+                }
+                if ($id_limite) {
+                    $query->leftJoin('telemetria_limite_parametros as tlp', function($join) use ($id_limite) {
+                        $join->on('tlp.parametro_id', '=', 'tr.parametro_id')
+                                ->where('tlp.limite_id', '=', $id_limite);
+                    });
+                    $query->addSelect(DB::raw("tlp.limite_inferior, tlp.limite_superior"));
+                }
+                $sql_data = $query->orderBy('fecha_muestreo', 'ASC')->get();
+            } else {
+                $query = DB::table('telemetria_resultados as tr')
+                        ->select(DB::raw(
+                            "tr.parametro_id as parametro_id,
+                            tp.nombre_parametro,
+                            te.nombre_estacion,
+                            tm.fecha_muestreo as fecha_muestreo,
+                            tr.resultado as resultado"
+                        ))
+                        ->join('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
+                        ->join('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
+                        ->join('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
+                        ->whereIn('te.nombre_estacion', $estacion)
+                        ->whereIn('tr.parametro_id', $id_parametro);
+                if($tipo_data == 1){
+                    $query->where(function($query) {
+                        $query->where('tr.estado_id', '!=', '3')
+                            ->orWhereNull('tr.estado_id');
+                    });
+                }
+                if ($id_limite) {
+                    $query->leftJoin('telemetria_limite_parametros as tlp', function($join) use ($id_limite) {
+                        $join->on('tlp.parametro_id', '=', 'tr.parametro_id')
+                                ->where('tlp.limite_id', '=', $id_limite);
+                    });
+                    $query->addSelect(DB::raw("tlp.limite_inferior, tlp.limite_superior"));
+                }
+                $sql_data = $query->orderBy('fecha_muestreo', 'ASC')->get();
             }
-            if ($id_limite) {
-                $query->leftJoin('telemetria_limite_parametros as tlp', function($join) use ($id_limite) {
-                    $join->on('tlp.parametro_id', '=', 'tr.parametro_id')
-                            ->where('tlp.limite_id', '=', $id_limite);
-                });
-                $query->addSelect(DB::raw("tlp.limite_inferior, tlp.limite_superior"));
-            }
-            $sql_data = $query->orderBy('fecha_muestreo', 'ASC')->get();
         } catch (Throwable $e) {
             report($e);
             return response()->json(['message' => $e->getMessage()], 400);
@@ -288,7 +319,8 @@ class GetDataTelController extends Controller
                 $nombre_parametro = $value['nombre_parametro'];
                 $t_parametro = TelemetriaParametro::firstOrCreate(
                     [
-                        'nombre_parametro' => $nombre_parametro
+                        'nombre_parametro' => $nombre_parametro,
+                        'id_tipo_parametro' => 1
                     ]
                 );
                 $data = [
@@ -503,38 +535,70 @@ class GetDataTelController extends Controller
         $cacheKey = 'windrose_data_' . implode('_', $id_parametros) . '_' . implode('_', $nombre_estacion).rand(1, 1000);;
         try {
             $sql_parametro = Cache::remember($cacheKey, 30 * 60, function() use ($id_parametros, $nombre_estacion) {
-                $subqueryDireccionViento = DB::table('telemetria_resultados as tr')
-                    ->select('tm.fecha_muestreo', 'tr.resultado as direccion_viento')
-                    ->leftJoin('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
-                    ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
+                if($id_parametros[0] == 73) {
+                    $subqueryDireccionViento = DB::table('telemetria_data_procesadas as tr')
+                    ->select('tr.fecha_muestreo', 'tr.resultado as direccion_viento')
+                    ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tr.nombre_estacion')
                     ->where('tr.parametro_id', 14)
                     ->whereIn('te.nombre_estacion', $nombre_estacion)
                     ->where('te.nombre_archivo', 'Ruido_10min')
                     ->distinct();
-    
-                return DB::table('telemetria_resultados as tr')
-                    ->select(DB::raw(
-                        "
-                        tr.parametro_id,
-                        tp.nombre_parametro,
-                        te.nombre_estacion,
-                        tm.fecha_muestreo,
-                        tr.resultado,
-                        dv.direccion_viento as WindDir_D1_WVT,
-                        tr.resultado as PM25_Avg
-                        "
-                    ))
-                    ->leftJoin('telemetria_muestras as tm', 'tm.id','=','tr.muestra_id')
-                    ->leftJoin('telemetria_estacions as te', 'te.id','=','tm.estacion_id')
-                    ->leftJoin('telemetria_parametros as tp', 'tp.id','=','tr.parametro_id')
-                    ->joinSub($subqueryDireccionViento, 'dv', function($join) {
-                        $join->on('tm.fecha_muestreo', '=', 'dv.fecha_muestreo');
-                    })
-                    ->whereIn('tr.parametro_id', $id_parametros)
-                    ->whereIn('te.nombre_estacion', $nombre_estacion)
-                    ->where('tm.fecha_muestreo','>','2024-01-01')
-                    ->distinct()
-                    ->get();
+                } else {
+                    $subqueryDireccionViento = DB::table('telemetria_resultados as tr')
+                        ->select('tm.fecha_muestreo', 'tr.resultado as direccion_viento')
+                        ->leftJoin('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
+                        ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
+                        ->where('tr.parametro_id', 14)
+                        ->whereIn('te.nombre_estacion', $nombre_estacion)
+                        ->where('te.nombre_archivo', 'Ruido_10min')
+                        ->distinct();
+                }
+                if($id_parametros[0] == 73) {
+                    return DB::table('telemetria_data_procesadas as tr')
+                                ->select(
+                                    'tr.parametro_id',
+                                    'tp.nombre_parametro',
+                                    'te.nombre_estacion',
+                                    DB::raw("concat(tr.fecha_muestreo, ' 12:00:00') as fecha_muestreo"),
+                                    'tr.resultado',
+                                    'dv.direccion_viento as WindDir_D1_WVT',
+                                    'tr.resultado as PM25_Avg'
+                                )
+                                ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tr.nombre_estacion')
+                                ->leftJoin('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
+                                ->joinSub($subqueryDireccionViento, 'dv', function($join) {
+                                    $join->on('tr.fecha_muestreo', '=', 'dv.fecha_muestreo');
+                                })
+                                ->whereIn('tr.parametro_id', $id_parametros)
+                                ->whereIn('te.nombre_estacion', $nombre_estacion)
+                                ->where('tr.fecha_muestreo', '>', '2024-01-01')
+                                ->distinct()
+                                ->get();
+                } else {
+                    return DB::table('telemetria_resultados as tr')
+                        ->select(DB::raw(
+                            "
+                            tr.parametro_id,
+                            tp.nombre_parametro,
+                            te.nombre_estacion,
+                            tm.fecha_muestreo,
+                            tr.resultado,
+                            dv.direccion_viento as WindDir_D1_WVT,
+                            tr.resultado as PM25_Avg
+                            "
+                        ))
+                        ->leftJoin('telemetria_muestras as tm', 'tm.id','=','tr.muestra_id')
+                        ->leftJoin('telemetria_estacions as te', 'te.id','=','tm.estacion_id')
+                        ->leftJoin('telemetria_parametros as tp', 'tp.id','=','tr.parametro_id')
+                        ->joinSub($subqueryDireccionViento, 'dv', function($join) {
+                            $join->on('tm.fecha_muestreo', '=', 'dv.fecha_muestreo');
+                        })
+                        ->whereIn('tr.parametro_id', $id_parametros)
+                        ->whereIn('te.nombre_estacion', $nombre_estacion)
+                        ->where('tm.fecha_muestreo','>','2024-01-01')
+                        ->distinct()
+                        ->get();
+                }
             });
         } catch (Throwable $e) {
             report($e);
@@ -578,11 +642,83 @@ class GetDataTelController extends Controller
         return response()->json($resultados);
     }
 
+    public function getResultadoPorProcesar(Request $request)
+    {
+        $parametro_id = $request->parametro_id;
+        $nombre_estacion = $request->nombre_estacion;
+        try {
+            if($nombre_estacion == "") {
+                $resultados =  TelemetriaEstacion::select('nombre_estacion')->distinct()->get();;
+            } else {
+                $resultados = DB::table('telemetria_resultados as tr')
+                ->select('tm.fecha_muestreo', 'tm.estacion_id', 'tr.muestra_id', 'te.nombre_estacion', 'tr.resultado', 'tr.unidad_id')
+                ->leftJoin('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
+                ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
+                ->where('te.nombre_estacion',$nombre_estacion)
+                ->where(function ($query) {
+                    $query->where('estado_id', '<>', '3')
+                        ->orWhereNull('estado_id');
+                })
+                ->where('parametro_id', $parametro_id)->get();
+            }
+
+        } catch (Throwable $e) {
+            report($e);
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
+        return response()->json($resultados);
+    }
+
+    public function getResultadoPorProcesarRuido(Request $request)
+    {
+        //$parametro_id = $request->parametro_id;
+        $tipo = $request->tipo;
+        $nombre_estacion = $request->nombre_estacion;
+        try {
+            if($nombre_estacion == "") {
+                $resultados =  TelemetriaEstacion::select('nombre_estacion')->distinct()->get();;
+            } else {
+                if($tipo == "1") {
+                    $resultados = DB::table('telemetria_resultados as tr')
+                    ->select('tm.fecha_muestreo', 'tm.estacion_id', 'te.nombre_estacion', 'tr.parametro_id', 'tp.nombre_parametro', 'tr.resultado', 'tr.unidad_id')
+                    ->leftJoin('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
+                    ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
+                    ->leftJoin('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
+                    ->where('te.nombre_estacion',$nombre_estacion)
+                    ->where(function ($query) {
+                        $query->where('estado_id', '<>', '3')
+                            ->orWhereNull('estado_id');
+                    })
+                    ->whereIn('te.nombre_archivo',['Percentiles', 'Ruido_10min'])
+                    ->whereIn('parametro_id', [10,11,12])->get();
+                } else {
+                    $resultados = DB::table('telemetria_resultados as tr')
+                    ->select('tm.fecha_muestreo', 'tm.estacion_id', 'te.nombre_estacion', 'tr.parametro_id', 'tp.nombre_parametro', 'tr.resultado', 'tr.unidad_id')
+                    ->leftJoin('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
+                    ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
+                    ->leftJoin('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
+                    ->where('te.nombre_estacion',$nombre_estacion)
+                    ->where(function ($query) {
+                        $query->where('estado_id', '<>', '3')
+                            ->orWhereNull('estado_id');
+                    })
+                    ->whereIn('te.nombre_archivo',['Percentiles', 'Ruido_10min'])
+                    ->whereIn('parametro_id', [4,5,6,7,8,9])->get();
+                }
+            }
+
+        } catch (Throwable $e) {
+            report($e);
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
+        return response()->json($resultados);
+    }
+
     public function getCriterioValidacion(Request $request)
     {
         try {
             $criterios_validacion = DB::table('telemetria_criterios_validacions as tcv')
-            ->select('aplicacion','tipo_estado')->orderBy('tipo_estado', 'desc')->get();
+            ->select('aplicacion','tipo_estado', 'tipo_criterio', 'variables')->orderBy('tipo_estado', 'desc')->get();
         } catch (Throwable $e) {
             report($e);
             return response()->json(['message' => $e->getMessage()], 400);
@@ -592,8 +728,7 @@ class GetDataTelController extends Controller
     public function getAllCriterioValidacion(Request $request)
     {
         try {
-            $criterios_validacion = DB::table('telemetria_criterios_validacions as tcv')
-            ->orderBy('tipo_estado', 'desc')->get();
+            $criterios_validacion = DB::table('telemetria_criterios_validacions as tcv')->get();
         } catch (Throwable $e) {
             report($e);
             return response()->json(['message' => $e->getMessage()], 400);

@@ -236,7 +236,12 @@ Route::post('updateEstadoResultado', [SetDataController::class,'updateEstadoResu
 Route::post('updateEstadoNullResultado', [SetDataController::class,'updateEstadoNullResultado']);
 Route::post('getAllCriterioValidacion', [GetDataTelController::class,'getAllCriterioValidacion']);
 Route::post('setNotificaciones', [SetDataController::class,'setNotificaciones']);
-
+Route::post('setCriterioValidacion', [SetDataController::class,'setCriterioValidacion']);
+Route::post('setParametroTelemetria', [SetDataController::class,'setParametroTelemetria']);
+Route::post('getResultadoPorProcesar', [GetDataTelController::class,'getResultadoPorProcesar']);
+Route::post('setDataProcesadaTelemetria', [SetDataController::class,'setDataProcesadaTelemetria']);
+Route::post('setClearDataProcesada', [SetDataController::class,'setClearDataProcesada']);
+Route::post('getResultadoPorProcesarRuido', [GetDataTelController::class,'getResultadoPorProcesarRuido']);
 //######## API PARA CLIENTE
 //Route::middleware('auth:sanctum')->apiResource('Muestras', MuestrasController::class);
 Route::apiResource('Login', LoginController::class);

@@ -22,6 +22,7 @@ class CreateTelemetriaCriteriosValidacionsTable extends Migration
             $table->string('variables',100);
             $table->string('criterio',150);
             $table->string('aplicacion',250);
+            $table->enum('activo',['S','N'])->default('S');
             $table->foreign('tipo_criterio')->references('id')->on('telemetria_tipo_criterios_validacions');
             $table->foreign('empresa_id')->references('id')->on('empresas');
             $table->foreign('tipo_estado')->references('id')->on('telemetria_estado_resultados');
