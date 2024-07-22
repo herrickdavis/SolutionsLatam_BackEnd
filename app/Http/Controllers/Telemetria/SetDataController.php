@@ -39,6 +39,7 @@ class SetDataController extends Controller
      */
     public function store(Request $request)
     {
+        ini_set('memory_limit', '1024M');
         set_time_limit(2400);
         $tamañoDelChunk = 2000;
         $hubo_error = false;

@@ -686,7 +686,7 @@ class GetDataTelController extends Controller
                             ->orWhereNull('estado_id');
                     })
                     ->whereIn('te.nombre_archivo',['Percentiles', 'Ruido_10min'])
-                    ->whereIn('parametro_id', [10,11,12])->get();
+                    ->whereIn('parametro_id', [9,10,11])->get();
                 } else {
                     $resultados = DB::table('telemetria_resultados as tr')
                     ->select('tm.fecha_muestreo', 'tm.estacion_id', 'te.nombre_estacion', 'tr.parametro_id', 'tp.nombre_parametro', 'tr.resultado', 'tr.unidad_id')
@@ -699,10 +699,9 @@ class GetDataTelController extends Controller
                             ->orWhereNull('estado_id');
                     })
                     ->whereIn('te.nombre_archivo',['Percentiles', 'Ruido_10min'])
-                    ->whereIn('parametro_id', [4,5,6,7,8,9])->get();
+                    ->whereIn('parametro_id', [3,4,5,6,7,8])->get();
                 }
             }
-
         } catch (Throwable $e) {
             report($e);
             return response()->json(['message' => $e->getMessage()], 400);
