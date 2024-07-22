@@ -14,7 +14,7 @@ class AddTelemetriaToUsersTable extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->enum('telemetria', ['S', 'N'])->nullable()->after('data_campo');;
+            $table->enum('telemetria', ['S', 'N'])->default('N')->after('data_campo');;
         });
     }
 
