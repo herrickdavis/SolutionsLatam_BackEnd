@@ -57,6 +57,7 @@ class SetUsuarioController extends Controller
             $ver_contacto_con = $request->ver_contacto_contratante;
             $idioma = $request->idioma;
             $data_campo = $request->data_campo;
+            $telemetria = $request->telemetria;
             $id_region = $request->region;
             
             $user = new User();
@@ -71,6 +72,7 @@ class SetUsuarioController extends Controller
             $user->ver_contacto_con = $ver_contacto_con;
             $user->idioma = $idioma;
             $user->data_campo = $data_campo;
+            $user->telemetria = $telemetria;
             $user->id_region = $id_region;
             $user->save();
 
@@ -141,6 +143,7 @@ class SetUsuarioController extends Controller
             $ver_contacto_con = $request->ver_contacto_con;
             $idioma = $request->idioma;
             $data_campo = $request->data_campo;
+            $telemetria = $request->telemetria;
             $id_region = $request->region;
 
             $user = User::where('email', '=', $email)->first();
@@ -158,6 +161,7 @@ class SetUsuarioController extends Controller
                 $user->ver_contacto_con = $ver_contacto_con;
                 $user->idioma = $idioma;
                 $user->data_campo = $data_campo;
+                $user->telemetria = $telemetria;
                 $user->id_region = $id_region;
                 $user->save();
                 

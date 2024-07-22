@@ -37,6 +37,7 @@ class GetLoginController extends Controller
             $usuario['email'] = $request->user()->email;
             $usuario['idioma'] = $request->user()->idioma;
             $usuario['data_campo'] = $request->user()->data_campo;
+            $usuario['telemetria'] = $request->user()->telemetria;
             $usuario['rol'] = $request->user()->id_rol;            
 
             $user = $request->user();

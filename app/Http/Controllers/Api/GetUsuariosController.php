@@ -70,6 +70,7 @@ class GetUsuariosController extends Controller
                         u.id_rol as id_rol,
                         u.idioma as idioma,
                         u.data_campo as data_campo,
+                        u.telemetria as telemetria,
                         u.id_region as id_region,
                         u.ver_empresa_sol as ver_empresa_sol,
                         u.ver_contacto_sol as ver_contacto_sol,
@@ -93,6 +94,7 @@ class GetUsuariosController extends Controller
             $rpta['id_rol'] = $value->id_rol;
             $rpta['idioma'] = $value->idioma;
             $rpta['data_campo'] = $value->data_campo;
+            $rpta['telemetria'] = $value->telemetria;
             $rpta['region'] = "".$value->id_region;
             $rpta['ver_empresa_sol'] = $value->ver_empresa_sol;
             $rpta['ver_contacto_sol'] = $value->ver_contacto_sol;

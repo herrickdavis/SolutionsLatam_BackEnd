@@ -257,13 +257,11 @@ class SetDataController extends Controller
     {   
         try {
             $id = $request->input('id');
-            \Log::info($request);
             if ($id) {
                 $telemetriaCriteriosValidacion = TelemetriaCriteriosValidacion::find($id);
                 if (!$telemetriaCriteriosValidacion) {
                     return response()->json(['message' => 'Registro no encontrado'], 404);
                 }
-                \Log::info($telemetriaCriteriosValidacion);
             } else {
                 $telemetriaCriteriosValidacion = new TelemetriaCriteriosValidacion();
             }
@@ -274,8 +272,6 @@ class SetDataController extends Controller
             $telemetriaCriteriosValidacion->variables = $request->input('variables');
             $telemetriaCriteriosValidacion->criterio = $request->input('criterio');
             $telemetriaCriteriosValidacion->aplicacion = $request->input('aplicacion');
-
-            \Log::info($telemetriaCriteriosValidacion);
         
             $telemetriaCriteriosValidacion->save();
             return response()->json(['message' => 'Creación Correcta'], 200);

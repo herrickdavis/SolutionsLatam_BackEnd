@@ -44,7 +44,6 @@ class GetDataTelController extends Controller
         $estacion = $request->nombre_estacion;
         $id_parametro = $request->id_parametros;
         $id_tipo_parametro = DB::table('telemetria_parametros as tp')->where('tp.id', $id_parametro[0])->value('id_tipo_parametro');
-        \Log::info($id_tipo_parametro);
         $id_limite = $request->id_limite;
         $tipo_data = $request->tipo_data;
         try {
@@ -343,15 +342,21 @@ class GetDataTelController extends Controller
         if($request->user()->id_empresa != '947') {
             return response()->json(['message' => 'Sin autorizacion'], 400);
         }
+
         $parametros = [];
         try {
-            $parametros = TelemetriaParametro::all();
+            // Realizamos la consulta con la lógica de concatenación condicional
+            $parametros = TelemetriaParametro::select('id', 
+                DB::raw("CASE WHEN id_tipo_parametro = 2 THEN CONCAT(nombre_parametro, ' (P)') ELSE nombre_parametro END as nombre_parametro"))
+                ->get();
         } catch (Throwable $e) {
             report($e);
             return response()->json(['message' => $e->getMessage()], 400);
         }
+
         return response()->json($parametros);
     }
+
 
     public function getAllGroup(Request $request)
     {
@@ -366,7 +371,7 @@ class GetDataTelController extends Controller
                                             tgp.id as id_grupo,
                                             tgp.nombre_grupo_parametro as nombre_grupo_parametro,
                                             tp.id as id_parametro,
-                                            tp.nombre_parametro as nombre_parametro
+                                            CASE WHEN tp.id_tipo_parametro = 2 THEN CONCAT(tp.nombre_parametro, ' (P)') ELSE tp.nombre_parametro END as nombre_parametro
                                             "
                                         ))
                                         ->leftJoin('telemetria_parametro_grupo_parametros as tpgp', 'tpgp.grupo_parametro_id','=','tgp.id')
@@ -535,25 +540,16 @@ class GetDataTelController extends Controller
         $cacheKey = 'windrose_data_' . implode('_', $id_parametros) . '_' . implode('_', $nombre_estacion).rand(1, 1000);;
         try {
             $sql_parametro = Cache::remember($cacheKey, 30 * 60, function() use ($id_parametros, $nombre_estacion) {
-                if($id_parametros[0] == 73) {
-                    $subqueryDireccionViento = DB::table('telemetria_data_procesadas as tr')
-                    ->select('tr.fecha_muestreo', 'tr.resultado as direccion_viento')
-                    ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tr.nombre_estacion')
+                $subqueryDireccionViento = DB::table('telemetria_resultados as tr')
+                    ->select('tm.fecha_muestreo', 'tr.resultado as direccion_viento')
+                    ->leftJoin('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
+                    ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
                     ->where('tr.parametro_id', 14)
                     ->whereIn('te.nombre_estacion', $nombre_estacion)
                     ->where('te.nombre_archivo', 'Ruido_10min')
                     ->distinct();
-                } else {
-                    $subqueryDireccionViento = DB::table('telemetria_resultados as tr')
-                        ->select('tm.fecha_muestreo', 'tr.resultado as direccion_viento')
-                        ->leftJoin('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
-                        ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
-                        ->where('tr.parametro_id', 14)
-                        ->whereIn('te.nombre_estacion', $nombre_estacion)
-                        ->where('te.nombre_archivo', 'Ruido_10min')
-                        ->distinct();
-                }
-                if($id_parametros[0] == 73) {
+                
+                if($id_parametros[0] > 75) {
                     return DB::table('telemetria_data_procesadas as tr')
                                 ->select(
                                     'tr.parametro_id',
@@ -564,10 +560,10 @@ class GetDataTelController extends Controller
                                     'dv.direccion_viento as WindDir_D1_WVT',
                                     'tr.resultado as PM25_Avg'
                                 )
-                                ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tr.nombre_estacion')
+                                ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tr.estacion_id')
                                 ->leftJoin('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
                                 ->joinSub($subqueryDireccionViento, 'dv', function($join) {
-                                    $join->on('tr.fecha_muestreo', '=', 'dv.fecha_muestreo');
+                                    $join->on(DB::raw("concat(tr.fecha_muestreo, ' 12:00:00')"), '=', 'dv.fecha_muestreo');
                                 })
                                 ->whereIn('tr.parametro_id', $id_parametros)
                                 ->whereIn('te.nombre_estacion', $nombre_estacion)
