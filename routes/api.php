@@ -222,6 +222,7 @@ Route::post('getAllUnit', [GetDataTelController::class,'getAllUnit']);
 Route::post('getAllAbreviatura', [GetDataTelController::class,'getAllAbreviatura']);
 Route::post('getProjectByName', [GetDataTelController::class,'getProjectByName']);
 Route::middleware('auth:sanctum')->post('getParameters', [GetDataTelController::class,'getParameters']);
+Route::post('getParametersLocal', [GetDataTelController::class,'getParametersLocal']);
 Route::middleware('auth:sanctum')->post('getAllGroup', [GetDataTelController::class,'getAllGroup']);
 Route::middleware('auth:sanctum')->post('getAllStation', [GetDataTelController::class,'getAllStation']);
 Route::post('getAllSampleByStation', [GetDataTelController::class,'getAllSampleByStation']);
@@ -242,6 +243,11 @@ Route::post('getResultadoPorProcesar', [GetDataTelController::class,'getResultad
 Route::post('setDataProcesadaTelemetria', [SetDataController::class,'setDataProcesadaTelemetria']);
 Route::post('setClearDataProcesada', [SetDataController::class,'setClearDataProcesada']);
 Route::post('getResultadoPorProcesarRuido', [GetDataTelController::class,'getResultadoPorProcesarRuido']);
+Route::post('getDataLastDay', [GetDataTelController::class,'getDataLastDay']);
+Route::post('getDataLastDayProcesada', [GetDataTelController::class,'getDataLastDayProcesada']);
+Route::post('getAllStationExternal', [GetDataTelController::class,'getAllStationExternal']);
+
+
 //######## API PARA CLIENTE
 //Route::middleware('auth:sanctum')->apiResource('Muestras', MuestrasController::class);
 Route::apiResource('Login', LoginController::class);

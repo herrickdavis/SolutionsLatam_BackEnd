@@ -35,9 +35,9 @@ class GetDataCOCController extends Controller
         $id_pais = $request->id_pais;
         $id_empresas = $request->id_empresas;
         if($id_pais != null && $id_empresas != null) {
-            $cadenas = DB::table("cadenas as c")->where('id_pais',$id_pais)->whereIn('id_empresa',$id_empresas);
+            $cadenas = DB::table("cadenas as c")->where('id_pais',$id_pais)->whereIn('id_empresa',$id_empresas)->orderBy('fecha_muestreo', 'desc');
         } else {
-            $cadenas = DB::table("cadenas as c")->whereIn('id_empresa',[1]);
+            $cadenas = DB::table("cadenas as c")->whereIn('id_empresa',[1])->orderBy('fecha_muestreo', 'desc');
         }
 
         if ($filtros != null) {

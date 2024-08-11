@@ -357,6 +357,19 @@ class GetDataTelController extends Controller
         return response()->json($parametros);
     }
 
+    public function getParametersLocal(Request $request)
+    {
+        try {
+            // Realizamos la consulta con la lógica de concatenación condicional
+            $parametros = TelemetriaParametro::select('id', 'nombre_parametro')->get();
+        } catch (Throwable $e) {
+            report($e);
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
+
+        return response()->json($parametros);
+    }
+
 
     public function getAllGroup(Request $request)
     {
@@ -472,6 +485,18 @@ class GetDataTelController extends Controller
         if($request->user()->id_empresa != '947') {
             return response()->json(['message' => 'Sin autorizacion'], 400);
         }
+        $t_estaciones = [];
+        try {
+            $t_estaciones = TelemetriaEstacion::select('nombre_estacion')->distinct()->get();
+        } catch (Throwable $e) {
+            report($e);
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
+        return response()->json($t_estaciones);
+    }
+
+    public function getAllStationExternal(Request $request)
+    {
         $t_estaciones = [];
         try {
             $t_estaciones = TelemetriaEstacion::select('nombre_estacion')->distinct()->get();
@@ -680,19 +705,21 @@ class GetDataTelController extends Controller
                     ->leftJoin('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
                     ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
                     ->leftJoin('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
+                    ->where('tm.fecha_muestreo', '>', '2024-01-01')
                     ->where('te.nombre_estacion',$nombre_estacion)
                     ->where(function ($query) {
                         $query->where('estado_id', '<>', '3')
                             ->orWhereNull('estado_id');
                     })
                     ->whereIn('te.nombre_archivo',['Percentiles', 'Ruido_10min'])
-                    ->whereIn('parametro_id', [9,10,11])->get();
+                    ->whereIn('parametro_id', [9,10,11,13,14,15,16,18])->get();
                 } else {
                     $resultados = DB::table('telemetria_resultados as tr')
                     ->select('tm.fecha_muestreo', 'tm.estacion_id', 'te.nombre_estacion', 'tr.parametro_id', 'tp.nombre_parametro', 'tr.resultado', 'tr.unidad_id')
                     ->leftJoin('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
                     ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
                     ->leftJoin('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
+                    ->where('tm.fecha_muestreo', '>', '2024-01-01')
                     ->where('te.nombre_estacion',$nombre_estacion)
                     ->where(function ($query) {
                         $query->where('estado_id', '<>', '3')
@@ -720,6 +747,47 @@ class GetDataTelController extends Controller
         }
         return response()->json($criterios_validacion);
     }
+
+    public function getDataLastDay(Request $request) 
+    {
+        $fecha = $request->fecha_muestreo;
+        $nombre_estacion = $request->nombre_estacion;
+
+        $fechaCarbon = Carbon::createFromFormat('Y-m-d H', $fecha.' 00');        
+        $fechaInicio = $fechaCarbon->startOfDay()->addHour(); // 2023-10-11 01:00:00
+        $fechaFin = $fechaCarbon->copy()->addDay()->startOfDay(); // 2023-10-12 00:00:00
+        $resultados = DB::table('telemetria_resultados as tr')
+        ->select('tm.fecha_muestreo', 'tp.nombre_parametro', 'tr.resultado')
+        ->leftJoin('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
+        ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
+        ->leftJoin('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
+        ->where('te.nombre_estacion', $nombre_estacion)
+        ->whereBetween('tm.fecha_muestreo', [$fechaInicio, $fechaFin])
+        ->orderBy('tm.fecha_muestreo')
+        ->get();
+
+        // Devolver los resultados (puedes ajustar esto según tus necesidades)
+        return response()->json($resultados);
+    }
+
+    public function getDataLastDayProcesada(Request $request) 
+    {
+        $fecha = $request->fecha_muestreo;
+        $nombre_estacion = $request->nombre_estacion;
+
+        $resultados = DB::table('telemetria_data_procesadas as tdp')
+        ->select('tdp.fecha_muestreo', 'tp.nombre_parametro', 'tdp.resultado')
+        ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tdp.estacion_id')
+        ->leftJoin('telemetria_parametros as tp', 'tp.id', '=', 'tdp.parametro_id')
+        ->where('te.nombre_estacion', $nombre_estacion)
+        ->where('tdp.fecha_muestreo', $fecha)
+        ->orderBy('tdp.fecha_muestreo')
+        ->get();
+
+        // Devolver los resultados (puedes ajustar esto según tus necesidades)
+        return response()->json($resultados);
+    }
+
     public function getAllCriterioValidacion(Request $request)
     {
         try {

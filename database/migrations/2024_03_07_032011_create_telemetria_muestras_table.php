@@ -17,6 +17,7 @@ class CreateTelemetriaMuestrasTable extends Migration
             $table->id();
             $table->foreignId('estacion_id');
             $table->dateTime('fecha_muestreo', $precision = 0);
+            $table->string('nombre_archivo', 50);
             $table->foreign('estacion_id')->references('id')->on('telemetria_estacions');
             $table->timestamps();
         });
