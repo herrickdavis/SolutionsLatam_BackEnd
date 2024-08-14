@@ -18,12 +18,12 @@ class CreateTelemetriaEstacionsTable extends Migration
             $table->string('nombre_estacion', 50);
             $table->foreignId('id_empresa');
             $table->foreignId('id_proyecto_telemetria');
-            $table->string('este', 10);
-            $table->string('norte', 10);
-            $table->string('altitud', 10);
-            $table->string('zona', 5);
-            $table->string('zona_descripcion', 50);
-            $table->string('descripcion', 250);
+            $table->string('este', 10)->nullable();
+            $table->string('norte', 10)->nullable();
+            $table->string('altitud', 10)->nullable();
+            $table->string('zona', 5)->nullable();
+            $table->string('zona_descripcion', 50)->nullable();
+            $table->string('descripcion', 250)->nullable();
             $table->timestamps();
             $table->unique(['nombre_estacion', 'id_empresa', 'id_proyecto_telemetria'], 'nombre_estacion_id_empresa_id_proyecto_telemetria_unique');
             $table->index('id_empresa');

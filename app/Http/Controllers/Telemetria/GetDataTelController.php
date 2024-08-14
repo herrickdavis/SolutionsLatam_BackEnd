@@ -208,7 +208,6 @@ class GetDataTelController extends Controller
             $t_estacion = TelemetriaEstacion::firstOrCreate(
                 [
                     'nombre_estacion' => $nombre_estacion,
-                    'nombre_archivo' => $nombre_archivo,
                     'id_empresa' => $id_empresa,
                     'id_proyecto_telemetria' => $id_proyecto
                 ]
@@ -254,6 +253,7 @@ class GetDataTelController extends Controller
                 $fecha = substr($value['fecha_muestreo'], 0, -3);
                 $id_estacion = str_pad($value['estacion_id'], 4, '0', STR_PAD_LEFT);
                 $muestra['id'] = $fecha.$id_estacion;
+                $muestra['nombre_archivo'] = $value['nombre_archivo'];
                 $muestra['created_at'] = now();
                 $muestra['updated_at'] = now();
                 array_push($data,$muestra);
@@ -712,7 +712,7 @@ class GetDataTelController extends Controller
                             ->orWhereNull('estado_id');
                     })
                     ->whereIn('te.nombre_archivo',['Percentiles', 'Ruido_10min'])
-                    ->whereIn('parametro_id', [9,10,11,13,14,15,16,18])->get();
+                    ->whereIn('parametro_id', [9,10,11,12,13,14,15,16,18])->get();
                 } else {
                     $resultados = DB::table('telemetria_resultados as tr')
                     ->select('tm.fecha_muestreo', 'tm.estacion_id', 'te.nombre_estacion', 'tr.parametro_id', 'tp.nombre_parametro', 'tr.resultado', 'tr.unidad_id')

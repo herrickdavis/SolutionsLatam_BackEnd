@@ -307,7 +307,7 @@ class SetDataController extends Controller
         $resultados = $request->all();
         DB::beginTransaction();
         try {
-            DB::table('telemetria_data_procesadas')->insert($resultados);
+            DB::table('telemetria_data_procesadas')->insertOrIgnore($resultados);
 
             DB::commit();
 
