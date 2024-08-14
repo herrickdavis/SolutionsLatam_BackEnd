@@ -711,8 +711,8 @@ class GetDataTelController extends Controller
                         $query->where('estado_id', '<>', '3')
                             ->orWhereNull('estado_id');
                     })
-                    ->whereIn('te.nombre_archivo',['Percentiles', 'Ruido_10min'])
-                    ->whereIn('parametro_id', [9,10,11,12,13,14,15,16,18])->get();
+                    ->whereIn('tm.nombre_archivo',['Percentiles', 'Ruido_10min'])
+                    ->whereIn('parametro_id', [7,8,9,10,11,12,13,14,15,16])->get();
                 } else {
                     $resultados = DB::table('telemetria_resultados as tr')
                     ->select('tm.fecha_muestreo', 'tm.estacion_id', 'te.nombre_estacion', 'tr.parametro_id', 'tp.nombre_parametro', 'tr.resultado', 'tr.unidad_id')
@@ -725,8 +725,8 @@ class GetDataTelController extends Controller
                         $query->where('estado_id', '<>', '3')
                             ->orWhereNull('estado_id');
                     })
-                    ->whereIn('te.nombre_archivo',['Percentiles', 'Ruido_10min'])
-                    ->whereIn('parametro_id', [3,4,5,6,7,8])->get();
+                    ->whereIn('tm.nombre_archivo',['Percentiles', 'Ruido_10min'])
+                    ->whereIn('parametro_id', [1,2,3,4,5,6])->get();
                 }
             }
         } catch (Throwable $e) {
@@ -753,8 +753,8 @@ class GetDataTelController extends Controller
         $fecha = $request->fecha_muestreo;
         $nombre_estacion = $request->nombre_estacion;
 
-        $fechaCarbon = Carbon::createFromFormat('Y-m-d H', $fecha.' 00');        
-        $fechaInicio = $fechaCarbon->startOfDay()->addHour(); // 2023-10-11 01:00:00
+        $fechaCarbon = Carbon::createFromFormat('Y-m-d', $fecha);        
+        $fechaInicio = $fechaCarbon->startOfDay()->addMinutes(10); // // 2023-10-11 01:00:00
         $fechaFin = $fechaCarbon->copy()->addDay()->startOfDay(); // 2023-10-12 00:00:00
         $resultados = DB::table('telemetria_resultados as tr')
         ->select('tm.fecha_muestreo', 'tp.nombre_parametro', 'tr.resultado')
