@@ -247,20 +247,29 @@ class GetDataTelController extends Controller
             $t_muestra = '';
             foreach ($request->all() as $value) {
                 $muestra = $value;
+                $nombre_archivo = $value['nombre_archivo'];
                 $fecha_muestreo = $value['fecha_muestreo'];
                 $fecha_muestreo = Carbon::createFromTimestamp($fecha_muestreo / 1000)->format('Y-m-d H:i:s');
                 $muestra['fecha_muestreo'] = $fecha_muestreo;
                 $fecha = substr($value['fecha_muestreo'], 0, -3);
                 $id_estacion = str_pad($value['estacion_id'], 4, '0', STR_PAD_LEFT);
-                $muestra['id'] = $fecha.$id_estacion;
-                $muestra['nombre_archivo'] = $value['nombre_archivo'];
+                
+                $nombre_archivo_hash = 0;
+                for ($i = 0; $i < strlen($nombre_archivo); $i++) {
+                    $nombre_archivo_hash += ord($nombre_archivo[$i]);
+                }
+                $nombre_archivo_hash = $nombre_archivo_hash % 10000;
+                $nombre_archivo_hash_str = sprintf('%05d', $nombre_archivo_hash);
+
+                $muestra['id'] = $fecha.$id_estacion.$nombre_archivo_hash_str;
+                $muestra['nombre_archivo'] = $nombre_archivo;
                 $muestra['created_at'] = now();
                 $muestra['updated_at'] = now();
                 array_push($data,$muestra);
             }
             $tamañoDelChunk = 2000;
             foreach (array_chunk($data, $tamañoDelChunk) as $chunk) {
-                $t_muestra = TelemetriaMuestra::insert($chunk);
+                $t_muestra = TelemetriaMuestra::insertOrIgnore($chunk);
             }
         } catch (Throwable $e) {
             report($e);
@@ -785,6 +794,25 @@ class GetDataTelController extends Controller
         ->get();
 
         // Devolver los resultados (puedes ajustar esto según tus necesidades)
+        return response()->json($resultados);
+    }
+
+    public function getDataResult(Request $request)
+    {
+        $nombre_estacion = $request->nombre_estacion;
+        // Obtener el tamaño de la página y la página actual desde la solicitud
+        $pageSize = $request->input('page_size', 1000); // Valor por defecto: 1000
+        $page = $request->input('page', 1); // Valor por defecto: 1
+
+        // Obtener los datos paginados desde la base de datos
+        $resultados = DB::table('telemetria_resultados as tr')
+        ->select('tr.id', 'tr.parametro_id')
+        ->leftJoin('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
+        ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
+        ->where('te.nombre_estacion', $nombre_estacion)
+        ->paginate($pageSize, ['*'], 'page', $page);
+
+        // Devolver los datos en formato JSON
         return response()->json($resultados);
     }
 

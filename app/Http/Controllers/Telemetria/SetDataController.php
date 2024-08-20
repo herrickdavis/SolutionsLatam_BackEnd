@@ -41,7 +41,7 @@ class SetDataController extends Controller
     {
         ini_set('memory_limit', '1024M');
         set_time_limit(2400);
-        $tamañoDelChunk = 2000;
+        $tamañoDelChunk = 10000;
         $hubo_error = false;
         try {
             foreach (array_chunk($request->all(), $tamañoDelChunk) as $chunk) {
