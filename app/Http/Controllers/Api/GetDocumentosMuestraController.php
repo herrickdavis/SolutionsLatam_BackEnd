@@ -31,6 +31,9 @@ class GetDocumentosMuestraController extends Controller
         $id_muestra = $request->id_muestra;
         try {
             $usuario = $request->user();
+            if($usuario->descargar_documento == 'N') {
+                return response()->json(['error' => 'No tienes permisos para realizar esta acción.'], 403);
+            }
             $idauxempresa = $usuario->id_empresa;
             $id_muestra = $request->id_muestra;
             $informe = trans('texto.Informe');

@@ -58,6 +58,7 @@ class SetUsuarioController extends Controller
             $idioma = $request->idioma;
             $data_campo = $request->data_campo;
             $telemetria = $request->telemetria;
+            $documentos = $request->documentos;
             $id_region = $request->region;
             
             $user = new User();
@@ -73,6 +74,7 @@ class SetUsuarioController extends Controller
             $user->idioma = $idioma;
             $user->data_campo = $data_campo;
             $user->telemetria = $telemetria;
+            $user->descargar_documento = $documentos;
             $user->id_region = $id_region;
             $user->save();
 
@@ -127,7 +129,7 @@ class SetUsuarioController extends Controller
             $rpta['mensaje'] = "No tiene los permisos necesarios para crear usuarios";
             return $rpta;
         }
-
+        \Log::info($request);
         try {
             $update = $request->update;
             $nombre = $request->nombre;
@@ -144,6 +146,7 @@ class SetUsuarioController extends Controller
             $idioma = $request->idioma;
             $data_campo = $request->data_campo;
             $telemetria = $request->telemetria;
+            $documentos = $request->documentos;
             $id_region = $request->region;
 
             $user = User::where('email', '=', $email)->first();
@@ -162,6 +165,7 @@ class SetUsuarioController extends Controller
                 $user->idioma = $idioma;
                 $user->data_campo = $data_campo;
                 $user->telemetria = $telemetria;
+                $user->descargar_documento = $documentos;
                 $user->id_region = $id_region;
                 $user->save();
                 

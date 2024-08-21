@@ -32,7 +32,9 @@ class GetZipMuestraController extends Controller
     public function store(Request $request)
     {
         $usuario = $request->user();
-
+        if($usuario->descargar_documento == 'N') {
+            return response()->json(['error' => 'No tienes permisos para realizar esta acción.'], 403);
+        }
         $id_muestra = $request->id_muestra;
         $tipo_archivo = $request->id_tipo_archivo;
         $analytic_click = new ClickBotones;
