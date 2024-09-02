@@ -278,6 +278,49 @@ class GetDataTelController extends Controller
         return response()->json($t_muestra);
     }
 
+    public function getIDInformacion(Request $request) 
+    {
+        \Log::info($request->input('unidades'));
+        $this->insertIgnore('telemetria_unidads', $request->input('unidades'), 'nombre_unidad');
+        $this->insertIgnore('telemetria_parametros', $request->input('parametros'), 'nombre_parametro');
+        $this->insertIgnore('telemetria_estacions', $request->input('estaciones'), 'nombre_estacion');
+        $this->insertIgnore('telemetria_abreviatura_procesamientos', $request->input('abreviaturas'), 'nombre_abreviatura');
+
+        $id_unidades = DB::table('telemetria_unidads')->select('id', 'nombre_unidad')->get();
+        $id_parametros = DB::table('telemetria_parametros')->select('id', 'nombre_parametro')->get();
+        $id_estaciones = DB::table('telemetria_estacions')->select('id', 'nombre_estacion')->get();
+        $id_abreviaturas = DB::table('telemetria_abreviatura_procesamientos')->select('id', 'nombre_abreviatura')->get();
+
+        $resultados = [
+            'unidades' => $id_unidades,
+            'parametros' => $id_parametros,
+            'estaciones' => $id_estaciones,
+            'abreviaturas' => $id_abreviaturas
+        ];
+
+        return response()->json($resultados);
+    }
+
+    private function insertIgnore($table, $names, $name_field)
+    {
+        $insertValues = [];
+        foreach ($names as $name) {
+            if ($table == 'telemetria_estacions') {
+                $insertValues[] = [
+                    $name_field => $name,
+                    'id_empresa' => 947,
+                    'id_proyecto_telemetria' => 1,
+                ];
+            } else {
+                $insertValues[] = [
+                    $name_field => $name
+                ];
+            }
+        }
+
+        DB::table($table)->insertOrIgnore($insertValues);
+    }
+
     public function getAllSampleByStation(Request $request)
     {
         set_time_limit(4800);
@@ -800,16 +843,19 @@ class GetDataTelController extends Controller
     public function getDataResult(Request $request)
     {
         $nombre_estacion = $request->nombre_estacion;
+        $nombre_parametro = $request->nombre_parametro;
         // Obtener el tamaño de la página y la página actual desde la solicitud
         $pageSize = $request->input('page_size', 1000); // Valor por defecto: 1000
         $page = $request->input('page', 1); // Valor por defecto: 1
 
         // Obtener los datos paginados desde la base de datos
         $resultados = DB::table('telemetria_resultados as tr')
-        ->select('tr.id', 'tr.parametro_id')
+        ->select('tr.muestra_id', 'tr.parametro_id')
         ->leftJoin('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
         ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
+        ->leftJoin('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
         ->where('te.nombre_estacion', $nombre_estacion)
+        ->where('tp.nombre_parametro', $nombre_parametro)
         ->paginate($pageSize, ['*'], 'page', $page);
 
         // Devolver los datos en formato JSON

@@ -43,11 +43,12 @@ class SetDataController extends Controller
         set_time_limit(2400);
         $tamañoDelChunk = 10000;
         $hubo_error = false;
+        DB::beginTransaction(); // Iniciar una transacción
         try {
             foreach (array_chunk($request->all(), $tamañoDelChunk) as $chunk) {
-                TelemetriaResultado::insert($chunk);
+                TelemetriaResultado::insertOrIgnore($chunk);
             }
-            
+            DB::commit(); // Confirmar la transacción si todo salió bien            
         } catch (Throwable $e) {
             DB::rollBack();
             report($e);
@@ -55,13 +56,17 @@ class SetDataController extends Controller
             $mensaje = $e->getMessage();
         }
         if ($hubo_error) {
-            $rpta['error'] = "error";
-            $rpta['mensaje'] = $mensaje;
-            return $rpta;
+            // Devolver una respuesta con el mensaje de error
+            return response()->json([
+                'error' => 'error',
+                'mensaje' => $mensaje
+            ], 500); // Devolver un código de estado 500 (Internal Server Error)
         } else {
-            $rpta['success'] = "success";
-            $rpta['mensaje'] = "Ok";
-            return $rpta;
+            // Devolver una respuesta de éxito
+            return response()->json([
+                'success' => 'success',
+                'mensaje' => 'Ok'
+            ], 200); // Devolver un código de estado 200 (OK)
         }
     }
 

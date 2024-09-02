@@ -92,12 +92,12 @@ class SetMuestraController extends Controller
                 $id_motivo_muestra = $data->id_motivo_muestra;
                 $nombre_motivo_muestra = $data->nombre_motivo_muestra;
                 $id_empresa_sol = $data->id_empresa_sol;
-                $codigo_empresa_sol = $data->codigo_empresa_sol;
+                $codigo_empresa_sol = $data->codigo_empresa_sol ?? '';
                 $nombre_empresa_sol = $data->nombre_empresa_sol;
                 $nombre_usuario_sol = $data->nombre_usuario_sol;
                 $email_usuario_sol = $data->email_usuario_sol;
                 $id_empresa_con = $data->id_empresa_con;
-                $codigo_empresa_con = $data->codigo_empresa_con;
+                $codigo_empresa_con = $data->codigo_empresa_con ?? '';
                 $nombre_empresa_con = $data->nombre_empresa_con;
                 $nombre_usuario_con = $data->nombre_usuario_con;
                 $email_usuario_con = $data->email_usuario_con;

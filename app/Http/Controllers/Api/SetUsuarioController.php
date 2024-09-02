@@ -129,7 +129,6 @@ class SetUsuarioController extends Controller
             $rpta['mensaje'] = "No tiene los permisos necesarios para crear usuarios";
             return $rpta;
         }
-        \Log::info($request);
         try {
             $update = $request->update;
             $nombre = $request->nombre;

@@ -247,6 +247,7 @@ Route::post('getDataLastDay', [GetDataTelController::class,'getDataLastDay']);
 Route::post('getDataLastDayProcesada', [GetDataTelController::class,'getDataLastDayProcesada']);
 Route::post('getAllStationExternal', [GetDataTelController::class,'getAllStationExternal']);
 Route::post('getDataResult', [GetDataTelController::class,'getDataResult']);
+Route::post('getIDInformacion', [GetDataTelController::class,'getIDInformacion']);
 
 //######## API PARA CLIENTE
 //Route::middleware('auth:sanctum')->apiResource('Muestras', MuestrasController::class);

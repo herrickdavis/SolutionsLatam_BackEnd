@@ -42,7 +42,7 @@ class GetDocumentoCOCController extends Controller
         $id_cadena = $request->id_muestras;
         //Terminamos de leer datos
         $db_cadenas = DB::table("cadenas as c")
-            ->select('c.*')            
+            ->select('c.*')
             ->whereIn('c.codigo_laboratorio', $id_cadena)
             ->get();
         $cadenas = [];
