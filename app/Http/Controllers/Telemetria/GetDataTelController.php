@@ -54,10 +54,12 @@ class GetDataTelController extends Controller
                                 'tp.nombre_parametro',
                                 'te.nombre_estacion',
                                 DB::raw("concat(tr.fecha_muestreo, ' 12:00:00') as fecha_muestreo"),
-                                'tr.resultado as resultado'
+                                'tr.resultado as resultado',
+                                'tu.nombre_unidad as unidad',
                             )
                             ->join('telemetria_estacions as te', 'te.id', '=', 'tr.estacion_id')
                             ->join('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
+                            ->join('telemetria_unidads as tu', 'tu.id', '=', 'tr.unidad_id')
                             ->whereIn('te.nombre_estacion', $estacion)
                             ->whereIn('tr.parametro_id', $id_parametro);
                 if($tipo_data == 1){
@@ -81,11 +83,13 @@ class GetDataTelController extends Controller
                             tp.nombre_parametro,
                             te.nombre_estacion,
                             tm.fecha_muestreo as fecha_muestreo,
-                            tr.resultado as resultado"
+                            tr.resultado as resultado,
+                            tu.nombre_unidad as unidad"
                         ))
                         ->join('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
                         ->join('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
                         ->join('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
+                        ->join('telemetria_unidads as tu', 'tu.id', '=', 'tr.unidad_id')
                         ->whereIn('te.nombre_estacion', $estacion)
                         ->whereIn('tr.parametro_id', $id_parametro);
                 if($tipo_data == 1){
@@ -280,7 +284,6 @@ class GetDataTelController extends Controller
 
     public function getIDInformacion(Request $request) 
     {
-        \Log::info($request->input('unidades'));
         $this->insertIgnore('telemetria_unidads', $request->input('unidades'), 'nombre_unidad');
         $this->insertIgnore('telemetria_parametros', $request->input('parametros'), 'nombre_parametro');
         $this->insertIgnore('telemetria_estacions', $request->input('estaciones'), 'nombre_estacion');
@@ -623,10 +626,10 @@ class GetDataTelController extends Controller
                     ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
                     ->where('tr.parametro_id', 14)
                     ->whereIn('te.nombre_estacion', $nombre_estacion)
-                    ->where('te.nombre_archivo', 'Ruido_10min')
-                    ->distinct();
+                    ->where('tm.nombre_archivo', 'Ruido_10min')
+                    ->where('tm.fecha_muestreo', '>', '2024-01-01');
                 
-                if($id_parametros[0] > 75) {
+                if($id_parametros[0] > 73) {
                     return DB::table('telemetria_data_procesadas as tr')
                                 ->select(
                                     'tr.parametro_id',
@@ -645,8 +648,7 @@ class GetDataTelController extends Controller
                                 ->whereIn('tr.parametro_id', $id_parametros)
                                 ->whereIn('te.nombre_estacion', $nombre_estacion)
                                 ->where('tr.fecha_muestreo', '>', '2024-01-01')
-                                ->distinct()
-                                ->get();
+                                ->limit(1000)->get();
                 } else {
                     return DB::table('telemetria_resultados as tr')
                         ->select(DB::raw(
@@ -669,8 +671,7 @@ class GetDataTelController extends Controller
                         ->whereIn('tr.parametro_id', $id_parametros)
                         ->whereIn('te.nombre_estacion', $nombre_estacion)
                         ->where('tm.fecha_muestreo','>','2024-01-01')
-                        ->distinct()
-                        ->get();
+                        ->limit(1000)->get();
                 }
             });
         } catch (Throwable $e) {
