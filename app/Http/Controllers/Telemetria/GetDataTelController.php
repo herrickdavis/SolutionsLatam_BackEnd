@@ -105,7 +105,7 @@ class GetDataTelController extends Controller
                     });
                     $query->addSelect(DB::raw("tlp.limite_inferior, tlp.limite_superior"));
                 }
-                $sql_data = $query->orderBy('fecha_muestreo', 'ASC')->get();
+                $sql_data = $query->where('fecha_muestreo','>','2024-01-01')->orderBy('fecha_muestreo', 'ASC')->get();
             }
         } catch (Throwable $e) {
             report($e);
@@ -616,19 +616,9 @@ class GetDataTelController extends Controller
     {
         $id_parametros = $request->id_parametros;
         $nombre_estacion = $request->nombre_estacion;
-
         $cacheKey = 'windrose_data_' . implode('_', $id_parametros) . '_' . implode('_', $nombre_estacion).rand(1, 1000);;
         try {
             $sql_parametro = Cache::remember($cacheKey, 30 * 60, function() use ($id_parametros, $nombre_estacion) {
-                $subqueryDireccionViento = DB::table('telemetria_resultados as tr')
-                    ->select('tm.fecha_muestreo', 'tr.resultado as direccion_viento')
-                    ->leftJoin('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
-                    ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
-                    ->where('tr.parametro_id', 14)
-                    ->whereIn('te.nombre_estacion', $nombre_estacion)
-                    ->where('tm.nombre_archivo', 'Ruido_10min')
-                    ->where('tm.fecha_muestreo', '>', '2024-01-01');
-                
                 if($id_parametros[0] > 73) {
                     return DB::table('telemetria_data_procesadas as tr')
                                 ->select(
@@ -642,13 +632,10 @@ class GetDataTelController extends Controller
                                 )
                                 ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tr.estacion_id')
                                 ->leftJoin('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
-                                ->joinSub($subqueryDireccionViento, 'dv', function($join) {
-                                    $join->on(DB::raw("concat(tr.fecha_muestreo, ' 12:00:00')"), '=', 'dv.fecha_muestreo');
-                                })
                                 ->whereIn('tr.parametro_id', $id_parametros)
                                 ->whereIn('te.nombre_estacion', $nombre_estacion)
                                 ->where('tr.fecha_muestreo', '>', '2024-01-01')
-                                ->limit(1000)->get();
+                                ->get();
                 } else {
                     return DB::table('telemetria_resultados as tr')
                         ->select(DB::raw(
@@ -658,20 +645,17 @@ class GetDataTelController extends Controller
                             te.nombre_estacion,
                             tm.fecha_muestreo,
                             tr.resultado,
-                            dv.direccion_viento as WindDir_D1_WVT,
+                            tr.direccion_viento as WindDir_D1_WVT,
                             tr.resultado as PM25_Avg
                             "
                         ))
                         ->leftJoin('telemetria_muestras as tm', 'tm.id','=','tr.muestra_id')
                         ->leftJoin('telemetria_estacions as te', 'te.id','=','tm.estacion_id')
                         ->leftJoin('telemetria_parametros as tp', 'tp.id','=','tr.parametro_id')
-                        ->joinSub($subqueryDireccionViento, 'dv', function($join) {
-                            $join->on('tm.fecha_muestreo', '=', 'dv.fecha_muestreo');
-                        })
                         ->whereIn('tr.parametro_id', $id_parametros)
                         ->whereIn('te.nombre_estacion', $nombre_estacion)
                         ->where('tm.fecha_muestreo','>','2024-01-01')
-                        ->limit(1000)->get();
+                        ->get();
                 }
             });
         } catch (Throwable $e) {
@@ -733,7 +717,7 @@ class GetDataTelController extends Controller
                     $query->where('estado_id', '<>', '3')
                         ->orWhereNull('estado_id');
                 })
-                ->where('parametro_id', $parametro_id)->get();
+                ->where('parametro_id', $parametro_id)->where('fecha_muestreo','>','2023-01-01')->get();
             }
 
         } catch (Throwable $e) {

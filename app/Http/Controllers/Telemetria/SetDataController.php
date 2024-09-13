@@ -41,7 +41,7 @@ class SetDataController extends Controller
     {
         ini_set('memory_limit', '1024M');
         set_time_limit(2400);
-        $tamañoDelChunk = 10000;
+        $tamañoDelChunk = 30000;
         $hubo_error = false;
         DB::beginTransaction(); // Iniciar una transacción
         try {
