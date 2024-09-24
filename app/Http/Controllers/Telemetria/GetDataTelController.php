@@ -698,7 +698,7 @@ class GetDataTelController extends Controller
                 $query->where('estado_id', '=', '1')
                     ->orWhereNull('estado_id');
             })
-            ->where('tm.fecha_muestreo', '>', '2024-09-18')
+            ->where('tm.fecha_muestreo', '>', '2024-09-22')
             ->paginate($numero_registros);
 
         } catch (Throwable $e) {
