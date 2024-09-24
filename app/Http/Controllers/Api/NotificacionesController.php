@@ -26,8 +26,14 @@ class NotificacionesController extends Controller
      */
     public function store(Request $request)
     {
-        $notifaciones = Notificacion::all();
-        return response()->json($notifaciones);
+        // Obtener el número de notificaciones por página desde la solicitud, con un valor predeterminado de 10
+        $notificacionesPorPagina = $request->input('per_page', 20); // Puedes cambiar el valor 10 por otro valor predeterminado si lo deseas
+
+        // Obtener las notificaciones paginadas
+        $notificaciones = Notificacion::paginate($notificacionesPorPagina);
+
+        // Devolver la respuesta JSON con la paginación
+        return response()->json($notificaciones);
     }
 
     /**

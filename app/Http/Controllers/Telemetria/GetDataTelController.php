@@ -15,6 +15,7 @@ use App\Models\TelemetriaResultado;
 use App\Models\TelemetriaUnidad;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Pagination\Paginator;
 use Throwable;
 
 class GetDataTelController extends Controller
@@ -681,17 +682,24 @@ class GetDataTelController extends Controller
 
     public function getResultadoPorValidar(Request $request)
     {
-        $parametro_id = $request->parametro_id;
+        $parametros_id = $request->parametros_id;
+        $numero_registros = $request->registros;
+        $page = $request->input('page', 1);
+        // Establecer la página actual para el paginador
+        Paginator::currentPageResolver(function () use ($page) {
+            return $page;
+        });
         try {
             $resultados = DB::table('telemetria_resultados as tr')
-            ->select('tm.fecha_muestreo', 'tr.muestra_id', 'te.nombre_estacion', 'tr.resultado')
+            ->select('tm.fecha_muestreo', 'tr.muestra_id', 'te.nombre_estacion', 'tr.parametro_id', 'tr.resultado')
             ->leftJoin('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
             ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
             ->where(function ($query) {
                 $query->where('estado_id', '=', '1')
                     ->orWhereNull('estado_id');
             })
-            ->where('parametro_id', $parametro_id)->limit(5000)->get();    
+            ->where('tm.fecha_muestreo', '>', '2024-09-18')
+            ->paginate($numero_registros);
 
         } catch (Throwable $e) {
             report($e);
