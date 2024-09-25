@@ -714,7 +714,6 @@ class GetDataTelController extends Controller
         $parametro_id = $request->parametro_id;
         $nombre_estacion = $request->nombre_estacion;
         $fecha_limite = Carbon::now()->subDays(2);
-        \Log::info($fecha_limite);
         try {
             if($nombre_estacion == "") {
                 $resultados =  TelemetriaEstacion::select('nombre_estacion')->distinct()->get();;

@@ -220,16 +220,23 @@ class SetDataController extends Controller
         }
     }
 
-    function updateEstadoNullResultado(Request $request)
+    public function updateEstadoNullResultado(Request $request)
     {
         set_time_limit(2400);
         DB::beginTransaction();
+
+        // Fecha actual menos 2 días
+        $fecha_limite = Carbon::now()->subDays(2);
+
         try {
             DB::statement('
-                UPDATE telemetria_resultados
-                SET estado_id = 3
-                WHERE (estado_id IS NULL OR estado_id = 1) AND resultado IS NULL
-            ');
+                UPDATE telemetria_resultados AS tr
+                JOIN telemetria_muestras AS tm ON tr.muestra_id = tm.id
+                SET tr.estado_id = 3
+                WHERE (tr.estado_id IS NULL OR tr.estado_id = 1) 
+                    AND tr.resultado IS NULL
+                    AND tm.fecha_muestreo > ?
+            ', [$fecha_limite]);
 
             DB::commit();
 
