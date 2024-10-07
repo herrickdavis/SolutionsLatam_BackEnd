@@ -37,83 +37,166 @@ class GetDataTelController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
-    {
-        set_time_limit(300);
-        if($request->user()->id_empresa != '947') {
-            return response()->json(['message' => 'Sin autorizacion'], 400);
-        }
-        $estacion = $request->nombre_estacion;
-        $id_parametro = $request->id_parametros;
-        $id_tipo_parametro = DB::table('telemetria_parametros as tp')->where('tp.id', $id_parametro[0])->value('id_tipo_parametro');
-        $id_limite = $request->id_limite;
-        $tipo_data = $request->tipo_data;
-        try {
-            if($id_tipo_parametro == '2') {
-                $query = DB::table('telemetria_data_procesadas as tr')
-                            ->select(
-                                'tr.parametro_id as parametro_id',
-                                'tp.nombre_parametro',
-                                'te.nombre_estacion',
-                                DB::raw("concat(tr.fecha_muestreo, ' 12:00:00') as fecha_muestreo"),
-                                'tr.resultado as resultado',
-                                'tu.nombre_unidad as unidad',
-                            )
-                            ->join('telemetria_estacions as te', 'te.id', '=', 'tr.estacion_id')
-                            ->join('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
-                            ->join('telemetria_unidads as tu', 'tu.id', '=', 'tr.unidad_id')
-                            ->whereIn('te.nombre_estacion', $estacion)
-                            ->whereIn('tr.parametro_id', $id_parametro);
-                if($tipo_data == 1){
-                    $query->where(function($query) {
-                        $query->where('tr.estado_id', '!=', '3')
-                            ->orWhereNull('tr.estado_id');
-                    });
-                }
-                if ($id_limite) {
-                    $query->leftJoin('telemetria_limite_parametros as tlp', function($join) use ($id_limite) {
-                        $join->on('tlp.parametro_id', '=', 'tr.parametro_id')
-                                ->where('tlp.limite_id', '=', $id_limite);
-                    });
-                    $query->addSelect(DB::raw("tlp.limite_inferior, tlp.limite_superior"));
-                }
-                $sql_data = $query->orderBy('fecha_muestreo', 'ASC')->get();
-            } else {
-                $query = DB::table('telemetria_resultados as tr')
-                        ->select(DB::raw(
-                            "tr.parametro_id as parametro_id,
-                            tp.nombre_parametro,
-                            te.nombre_estacion,
-                            tm.fecha_muestreo as fecha_muestreo,
-                            tr.resultado as resultado,
-                            tu.nombre_unidad as unidad"
-                        ))
-                        ->join('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
-                        ->join('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
-                        ->join('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
-                        ->join('telemetria_unidads as tu', 'tu.id', '=', 'tr.unidad_id')
-                        ->whereIn('te.nombre_estacion', $estacion)
-                        ->whereIn('tr.parametro_id', $id_parametro);
-                if($tipo_data == 1){
-                    $query->where(function($query) {
-                        $query->where('tr.estado_id', '!=', '3')
-                            ->orWhereNull('tr.estado_id');
-                    });
-                }
-                if ($id_limite) {
-                    $query->leftJoin('telemetria_limite_parametros as tlp', function($join) use ($id_limite) {
-                        $join->on('tlp.parametro_id', '=', 'tr.parametro_id')
-                                ->where('tlp.limite_id', '=', $id_limite);
-                    });
-                    $query->addSelect(DB::raw("tlp.limite_inferior, tlp.limite_superior"));
-                }
-                $sql_data = $query->where('fecha_muestreo','>','2024-01-01')->orderBy('fecha_muestreo', 'ASC')->get();
-            }
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json(['message' => $e->getMessage()], 400);
-        }
-        return $sql_data;
+{
+    set_time_limit(600);
+
+    if ($request->user()->id_empresa != '947') {
+        return response()->json(['message' => 'Sin autorización'], 400);
     }
+
+    $estacion = $request->nombre_estacion;
+    $id_parametro = $request->id_parametros;
+    $id_limite = $request->id_limite;
+    $tipo_data = $request->tipo_data;
+
+    try {
+        // Obtener los IDs de estaciones
+        $id_estaciones = DB::table('telemetria_estacions as te')
+                            ->whereIn('te.nombre_estacion', $estacion)
+                            ->pluck('id')
+                            ->toArray();
+
+        $resultadosCombinados = [];
+
+        // Cachear resultados para cada combinación de estación y parámetro
+        foreach ($id_estaciones as $estacionId) {
+            foreach ($id_parametro as $parametroId) {
+                // Obtener el id_tipo_parametro para este parámetro
+                $id_tipo_parametro = DB::table('telemetria_parametros as tp')->where('tp.id', $parametroId)->value('id_tipo_parametro');
+
+                // Generar una clave de caché única para cada combinación de estación y parámetro
+                $cacheKey = 'telemetria_estacion_' . $estacionId . '_parametro_' . $parametroId;
+
+                // Obtener datos cacheados si existen
+                $datosEstacionParametro = Cache::get($cacheKey, []);
+
+                // Comprobar si hay datos en caché
+                if (!empty($datosEstacionParametro)) {
+                    // Convertir a colección y obtener la última fecha_muestreo
+                    $datosEstacionParametro = collect($datosEstacionParametro);
+                    $ultimaFecha = $datosEstacionParametro->max('fecha_muestreo');
+
+                    // Obtener la fecha de la última actualización desde el caché
+                    $cacheTimestamp = Cache::get($cacheKey . '_timestamp', now());
+
+                    // Verificar si ha pasado más de 1 hora desde la última actualización
+                    $intervalo = (new \DateTime($cacheTimestamp))->diff(new \DateTime());
+                    if ($intervalo->h >= 1) {
+                        // Obtener datos adicionales desde la última fecha_muestreo
+                        $nuevosDatos = $this->obtenerDatosNuevos($estacionId, $parametroId, $id_tipo_parametro, $ultimaFecha);
+
+                        // Combinar datos existentes con los nuevos
+                        $datosEstacionParametro = $datosEstacionParametro->merge($nuevosDatos);
+
+                        // Actualizar la caché con la nueva combinación de datos, usando Cache::forever()
+                        Cache::forever($cacheKey, $datosEstacionParametro->toArray());
+                        Cache::forever($cacheKey . '_timestamp', now());
+                    }
+                } else {
+                    // Si la caché está vacía, obtener todos los datos y almacenarlos en caché
+                    $datosEstacionParametro = $this->obtenerDatosNuevos($estacionId, $parametroId, $id_tipo_parametro);
+                    Cache::forever($cacheKey, $datosEstacionParametro->toArray());
+                    Cache::forever($cacheKey . '_timestamp', now());
+                }
+
+                // Combinar los resultados cacheados de esta estación y parámetro con el resultado general
+                $resultadosCombinados = array_merge($resultadosCombinados, $datosEstacionParametro->toArray());
+            }
+        }
+
+        // Convertir los resultados combinados a una colección para aplicar los filtros
+        $sql_data = collect($resultadosCombinados);
+
+        // Aplicar filtros adicionales después de recuperar el caché
+        if ($tipo_data == 1) {
+            $sql_data = $sql_data->filter(function ($item) {
+                return $item->estado_id != '3' || is_null($item->estado_id);
+            });
+        }
+
+        // Aplicar límites si están definidos
+        if ($id_limite) {
+            // Obtener los límites desde la base de datos
+            $limites = DB::table('telemetria_limite_parametros as tlp')
+                ->where('tlp.limite_id', $id_limite)
+                ->whereIn('tlp.parametro_id', $id_parametro)
+                ->select('tlp.parametro_id', 'tlp.limite_inferior', 'tlp.limite_superior')
+                ->get()
+                ->keyBy('parametro_id'); // Indexar por 'parametro_id' para fácil acceso
+
+            // Agregar límites a los datos
+            $sql_data = $sql_data->map(function ($item) use ($limites) {
+                if (isset($limites[$item->parametro_id])) {
+                    $item->limite_inferior = $limites[$item->parametro_id]->limite_inferior;
+                    $item->limite_superior = $limites[$item->parametro_id]->limite_superior;
+                } else {
+                    $item->limite_inferior = null;
+                    $item->limite_superior = null;
+                }
+                return $item;
+            });
+        }
+
+    } catch (Throwable $e) {
+        report($e);
+        return response()->json(['message' => $e->getMessage()], 400);
+    }
+
+    return $sql_data;
+}
+
+// Método para obtener los datos nuevos desde la última fecha
+private function obtenerDatosNuevos($estacionId, $parametroId, $id_tipo_parametro, $ultimaFecha = null)
+{
+    if ($id_tipo_parametro == '2') {
+        $query = DB::table('telemetria_data_procesadas as tr')
+            ->select(
+                'tr.parametro_id as parametro_id',
+                'tp.nombre_parametro',
+                'te.nombre_estacion',
+                DB::raw("concat(tr.fecha_muestreo, ' 12:00:00') as fecha_muestreo"),
+                'tr.resultado as resultado',
+                'tu.nombre_unidad as unidad',
+                'tr.estado_id'
+            )
+            ->join('telemetria_estacions as te', 'te.id', '=', 'tr.estacion_id')
+            ->join('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
+            ->join('telemetria_unidads as tu', 'tu.id', '=', 'tr.unidad_id')
+            ->where('te.id', $estacionId)
+            ->where('tr.parametro_id', $parametroId);
+
+        if ($ultimaFecha) {
+            $query->where('tr.fecha_muestreo', '>', $ultimaFecha);
+        }
+
+        return $query->orderBy('tr.fecha_muestreo', 'ASC')->get();
+    } else {
+        $query = DB::table('telemetria_muestras as tm')
+            ->select(
+                'tr.parametro_id as parametro_id',
+                'tp.nombre_parametro',
+                'te.nombre_estacion',
+                'tm.fecha_muestreo as fecha_muestreo',
+                'tr.resultado as resultado',
+                'tu.nombre_unidad as unidad',
+                'tr.estado_id'
+            )
+            ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
+            ->leftJoin('telemetria_resultados as tr', 'tm.id', '=', 'tr.muestra_id')
+            ->leftJoin('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
+            ->leftJoin('telemetria_unidads as tu', 'tu.id', '=', 'tr.unidad_id')
+            ->where('te.id', $estacionId)
+            ->where('tr.parametro_id', $parametroId);
+
+        if ($ultimaFecha) {
+            $query->where('tm.fecha_muestreo', '>', $ultimaFecha);
+        }
+
+        return $query->orderBy('tm.fecha_muestreo', 'ASC')->get();
+    }
+}
+
+    
 
     /**
      * Display the specified resource.
@@ -617,28 +700,76 @@ class GetDataTelController extends Controller
     {
         $id_parametros = $request->id_parametros;
         $nombre_estacion = $request->nombre_estacion;
-        $cacheKey = 'windrose_data_' . implode('_', $id_parametros) . '_' . implode('_', $nombre_estacion).rand(1, 1000);;
+
+        // Generar una clave de caché única basada en estación y parámetros
+        $cacheKey = 'windrose_data_' . implode('_', $id_parametros) . '_' . implode('_', $nombre_estacion);
+
         try {
-            $sql_parametro = Cache::remember($cacheKey, 30 * 60, function() use ($id_parametros, $nombre_estacion) {
-                if($id_parametros[0] > 73) {
-                    return DB::table('telemetria_data_procesadas as tr')
-                                ->select(
-                                    'tr.parametro_id',
-                                    'tp.nombre_parametro',
-                                    'te.nombre_estacion',
-                                    DB::raw("concat(tr.fecha_muestreo, ' 12:00:00') as fecha_muestreo"),
-                                    'tr.resultado',
-                                    'dv.direccion_viento as WindDir_D1_WVT',
-                                    'tr.resultado as PM25_Avg'
-                                )
-                                ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tr.estacion_id')
-                                ->leftJoin('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
-                                ->whereIn('tr.parametro_id', $id_parametros)
-                                ->whereIn('te.nombre_estacion', $nombre_estacion)
-                                ->where('tr.fecha_muestreo', '>', '2024-01-01')
-                                ->get();
-                } else {
-                    return DB::table('telemetria_resultados as tr')
+            // Obtener datos cacheados si existen
+            $datosCacheados = Cache::get($cacheKey, []);
+
+            // Comprobar si hay datos en caché
+            if (!empty($datosCacheados)) {
+                // Convertir a colección y obtener la última fecha_muestreo
+                $datosCacheados = collect($datosCacheados);
+                $ultimaFecha = $datosCacheados->max('fecha_muestreo');
+
+                // Obtener la fecha de la última actualización desde el caché
+                $cacheTimestamp = Cache::get($cacheKey . '_timestamp', now());
+
+                // Verificar si ha pasado más de 1 hora desde la última actualización
+                $intervalo = (new \DateTime($cacheTimestamp))->diff(new \DateTime());
+                if ($intervalo->h >= 1) {
+                    // Obtener datos adicionales desde la última fecha_muestreo
+                    $nuevosDatos = $this->obtenerDatosWindRose($id_parametros, $nombre_estacion, $ultimaFecha);
+
+                    // Combinar datos existentes con los nuevos
+                    $datosCacheados = $datosCacheados->merge($nuevosDatos);
+
+                    // Actualizar la caché con la nueva combinación de datos, usando Cache::forever()
+                    Cache::forever($cacheKey, $datosCacheados->toArray());
+                    Cache::forever($cacheKey . '_timestamp', now());
+                }
+            } else {
+                // Si la caché está vacía, obtener todos los datos y almacenarlos en caché
+                $datosCacheados = $this->obtenerDatosWindRose($id_parametros, $nombre_estacion);
+                Cache::forever($cacheKey, $datosCacheados->toArray());
+                Cache::forever($cacheKey . '_timestamp', now());
+            }
+        } catch (Throwable $e) {
+            report($e);
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
+
+        return response()->json($datosCacheados);
+    }
+
+    // Método para obtener los datos (nuevos o completos)
+    private function obtenerDatosWindRose($id_parametros, $nombre_estacion, $ultimaFecha = null)
+    {
+        if ($id_parametros[0] > 73) {
+            $query = DB::table('telemetria_data_procesadas as tr')
+                        ->select(
+                            'tr.parametro_id',
+                            'tp.nombre_parametro',
+                            'te.nombre_estacion',
+                            DB::raw("concat(tr.fecha_muestreo, ' 12:00:00') as fecha_muestreo"),
+                            'tr.resultado',
+                            'dv.direccion_viento as WindDir_D1_WVT',
+                            'tr.resultado as PM25_Avg'
+                        )
+                        ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tr.estacion_id')
+                        ->leftJoin('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
+                        ->whereIn('tr.parametro_id', $id_parametros)
+                        ->whereIn('te.nombre_estacion', $nombre_estacion);
+
+            if ($ultimaFecha) {
+                $query->where('tr.fecha_muestreo', '>', $ultimaFecha);
+            }
+
+            return $query->get();
+        } else {
+            $query = DB::table('telemetria_resultados as tr')
                         ->select(DB::raw(
                             "
                             tr.parametro_id,
@@ -650,21 +781,20 @@ class GetDataTelController extends Controller
                             tr.resultado as PM25_Avg
                             "
                         ))
-                        ->leftJoin('telemetria_muestras as tm', 'tm.id','=','tr.muestra_id')
-                        ->leftJoin('telemetria_estacions as te', 'te.id','=','tm.estacion_id')
-                        ->leftJoin('telemetria_parametros as tp', 'tp.id','=','tr.parametro_id')
+                        ->leftJoin('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
+                        ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
+                        ->leftJoin('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
                         ->whereIn('tr.parametro_id', $id_parametros)
-                        ->whereIn('te.nombre_estacion', $nombre_estacion)
-                        ->where('tm.fecha_muestreo','>','2024-01-01')
-                        ->get();
-                }
-            });
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json(['message' => $e->getMessage()], 400);
+                        ->whereIn('te.nombre_estacion', $nombre_estacion);
+
+            if ($ultimaFecha) {
+                $query->where('tm.fecha_muestreo', '>', $ultimaFecha);
+            }
+
+            return $query->get();
         }
-        return response()->json($sql_parametro);
     }
+
 
     public function getParametroByName(Request $request)
     {
