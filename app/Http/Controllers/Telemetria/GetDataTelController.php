@@ -30,13 +30,76 @@ class GetDataTelController extends Controller
         //
     }
 
+    public function store(Request $request) 
+    {
+        if ($request->user()->id_empresa != '947') {
+            return response()->json(['message' => 'Sin autorización'], 400);
+        }
+
+        $estacion = $request->nombre_estacion;
+        $id_parametro = $request->id_parametro;
+        $tipo_data = $request->tipo_data;
+        $fecha_inicio = $request->fecha_inicio;
+        $fecha_fin = $request->fecha_fin;
+
+        $id_estaciones = DB::table('telemetria_estacions as te')
+                                ->whereIn('te.nombre_estacion', $estacion)
+                                ->pluck('id')
+                                ->toArray();
+
+        $id_tipo_parametro = DB::table('telemetria_parametros as tp')->where('tp.id', $id_parametro)->value('id_tipo_parametro');
+        if ($id_tipo_parametro == '2') {
+            $query = DB::table('telemetria_data_procesadas as tr')
+                ->select(
+                    'tr.parametro_id as parametro_id',
+                    'tp.nombre_parametro',
+                    'te.nombre_estacion',
+                    DB::raw("concat(tr.fecha_muestreo, ' 12:00:00') as fecha_muestreo"),
+                    'tr.resultado as resultado',
+                    'tu.nombre_unidad as unidad',
+                    'tr.estado_id'
+                )
+                ->join('telemetria_estacions as te', 'te.id', '=', 'tr.estacion_id')
+                ->join('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
+                ->join('telemetria_unidads as tu', 'tu.id', '=', 'tr.unidad_id')
+                ->whereIn('tr.estacion_id', $id_estaciones)
+                ->where('tr.parametro_id', $id_parametro)
+                ->where('tr.fecha_muestreo','>', $fecha_inicio)
+                ->where('tr.fecha_muestreo','<', $fecha_fin);
+
+
+            return $query->orderBy('tr.fecha_muestreo', 'ASC')->get();
+        } else {
+            $query = DB::table('telemetria_muestras as tm')
+                ->select(
+                    'tr.parametro_id',
+                    'tp.nombre_parametro',
+                    'te.nombre_estacion',
+                    'tm.fecha_muestreo as fecha_muestreo',
+                    'tr.resultado as resultado',
+                    'tu.nombre_unidad as unidad',
+                    'tr.estado_id'
+                )
+                ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
+                ->leftJoin('telemetria_resultados as tr', 'tm.id', '=', 'tr.muestra_id')
+                ->leftjoin('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
+                ->leftJoin('telemetria_unidads as tu', 'tu.id', '=', 'tr.unidad_id')
+                ->whereIn('tm.estacion_id', $id_estaciones)
+                ->where('tr.parametro_id', $id_parametro)
+                ->where('tm.fecha_muestreo','>', $fecha_inicio)
+                ->where('tm.fecha_muestreo','<', $fecha_fin);                
+
+            return $query->orderBy('tm.fecha_muestreo', 'ASC')->get();
+        }
+    }
+
     /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store2(Request $request)
     {
         set_time_limit(600);
 
