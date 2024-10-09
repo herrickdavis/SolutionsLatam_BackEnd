@@ -41,6 +41,7 @@ class GetDataTelController extends Controller
         $tipo_data = $request->tipo_data;
         $fecha_inicio = $request->fecha_inicio;
         $fecha_fin = $request->fecha_fin;
+        $id_limite = $request->id_limite;
 
         $id_estaciones = DB::table('telemetria_estacions as te')
                                 ->whereIn('te.nombre_estacion', $estacion)
@@ -48,6 +49,7 @@ class GetDataTelController extends Controller
                                 ->toArray();
 
         $id_tipo_parametro = DB::table('telemetria_parametros as tp')->where('tp.id', $id_parametro)->value('id_tipo_parametro');
+        
         if ($id_tipo_parametro == '2') {
             $query = DB::table('telemetria_data_procesadas as tr')
                 ->select(
@@ -64,12 +66,23 @@ class GetDataTelController extends Controller
                 ->join('telemetria_unidads as tu', 'tu.id', '=', 'tr.unidad_id')
                 ->whereIn('tr.estacion_id', $id_estaciones)
                 ->where('tr.parametro_id', $id_parametro)
-                ->where('tr.fecha_muestreo','>', $fecha_inicio)
-                ->where('tr.fecha_muestreo','<', $fecha_fin);
+                ->where('tr.fecha_muestreo', '>', $fecha_inicio)
+                ->where('tr.fecha_muestreo', '<', $fecha_fin);
+            
+            if ($id_limite) {
+                // Hacemos leftJoin con la tabla de límites si $id_limite está definido
+                $query = $query->leftJoin('telemetria_limite_parametros as tlp', function($join) use ($id_limite, $id_parametro) {
+                    $join->on('tlp.parametro_id', '=', 'tr.parametro_id')
+                        ->where('tlp.limite_id', '=', $id_limite);
+                });
 
+                // Seleccionamos también los límites en el select
+                $query->addSelect('tlp.limite_inferior', 'tlp.limite_superior');
+            }
 
             return $query->orderBy('tr.fecha_muestreo', 'ASC')->get();
         } else {
+            // Si no hay límites definidos ($id_limite), no incluimos límites en la consulta
             $query = DB::table('telemetria_muestras as tm')
                 ->select(
                     'tr.parametro_id',
@@ -82,14 +95,26 @@ class GetDataTelController extends Controller
                 )
                 ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
                 ->leftJoin('telemetria_resultados as tr', 'tm.id', '=', 'tr.muestra_id')
-                ->leftjoin('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
-                ->leftJoin('telemetria_unidads as tu', 'tu.id', '=', 'tr.unidad_id')
-                ->whereIn('tm.estacion_id', $id_estaciones)
-                ->where('tr.parametro_id', $id_parametro)
-                ->where('tm.fecha_muestreo','>', $fecha_inicio)
-                ->where('tm.fecha_muestreo','<', $fecha_fin);                
+                ->leftJoin('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
+                ->leftJoin('telemetria_unidads as tu', 'tu.id', '=', 'tr.unidad_id');
 
-            return $query->orderBy('tm.fecha_muestreo', 'ASC')->get();
+            if ($id_limite) {
+                // Si $id_limite está definido, hacemos una left join con la tabla de límites
+                $query = $query->leftJoin('telemetria_limite_parametros as tlp', function($join) use ($id_limite) {
+                    $join->on('tlp.parametro_id', '=', 'tr.parametro_id')
+                        ->where('tlp.limite_id', '=', $id_limite);
+                });
+                // También seleccionamos los límites
+                $query->addSelect('tlp.limite_inferior', 'tlp.limite_superior');
+            }
+
+            $query = $query->whereIn('tm.estacion_id', $id_estaciones)
+                ->where('tr.parametro_id', $id_parametro)
+                ->where('tm.fecha_muestreo', '>', $fecha_inicio)
+                ->where('tm.fecha_muestreo', '<', $fecha_fin)
+                ->orderBy('tm.fecha_muestreo', 'ASC');
+
+            return $query->get();
         }
     }
 
