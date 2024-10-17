@@ -90,6 +90,7 @@ class GetDataTelController extends Controller
                     'te.nombre_estacion',
                     'tm.fecha_muestreo as fecha_muestreo',
                     'tr.resultado as resultado',
+                    'tr.direccion_viento as WindDir_D1_WVT',
                     'tu.nombre_unidad as unidad',
                     'tr.estado_id'
                 )
@@ -1021,21 +1022,61 @@ class GetDataTelController extends Controller
         $nombre_estacion = $request->nombre_estacion;
 
         $fechaCarbon = Carbon::createFromFormat('Y-m-d', $fecha);        
-        $fechaInicio = $fechaCarbon->startOfDay()->addMinutes(10); // // 2023-10-11 01:00:00
+        $fechaInicio = $fechaCarbon->startOfDay()->addMinutes(10); // 2023-10-11 00:10:00
         $fechaFin = $fechaCarbon->copy()->addDay()->startOfDay(); // 2023-10-12 00:00:00
-        $resultados = DB::table('telemetria_resultados as tr')
-        ->select('tm.fecha_muestreo', 'tp.nombre_parametro', 'tr.resultado')
-        ->leftJoin('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
-        ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
-        ->leftJoin('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
-        ->where('te.nombre_estacion', $nombre_estacion)
-        ->whereBetween('tm.fecha_muestreo', [$fechaInicio, $fechaFin])
-        ->orderBy('tm.fecha_muestreo')
-        ->get();
 
-        // Devolver los resultados (puedes ajustar esto según tus necesidades)
-        return response()->json($resultados);
+        // Formatear la fecha de muestreo para los parámetros de estación
+        $fechaMuestreo = $fechaCarbon->format('Y-m-d H:i:s');
+
+        $resultados = DB::table('telemetria_resultados as tr')
+            ->select('tm.fecha_muestreo', 'tp.nombre_parametro', 'tr.resultado')
+            ->leftJoin('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
+            ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
+            ->leftJoin('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
+            ->where('te.nombre_estacion', $nombre_estacion)
+            ->whereBetween('tm.fecha_muestreo', [$fechaInicio, $fechaFin])
+            ->orderBy('tm.fecha_muestreo')
+            ->get();
+
+        // Convertir cada objeto en $resultados a un array
+        $resultadosArray = $resultados->map(function ($item) {
+            return (array) $item;
+        });
+
+        // Obtener una fila de la estación para sacar todas las columnas dinámicamente
+        $estacion = DB::table('telemetria_estacions')
+            ->where('nombre_estacion', $nombre_estacion)
+            ->first();
+
+        $parametrosEstacion = collect();
+
+        if ($estacion) {
+            // Convertir el objeto $estacion a un array
+            $estacionArray = (array) $estacion;
+
+            // Excluir columnas no deseadas (opcional)
+            $columnasExcluir = ['id', 'nombre_estacion', 'created_at', 'updated_at'];
+
+            // Recorrer todas las columnas de la estación y formatearlas
+            foreach ($estacionArray as $columna => $valor) {
+                if (!in_array($columna, $columnasExcluir)) {
+                    $parametrosEstacion->push([
+                        'fecha_muestreo' => $fechaMuestreo,  // Usar la fecha de búsqueda
+                        'nombre_parametro' => $columna,      // El nombre de la columna como nombre del parámetro
+                        'resultado' => $valor                // El valor de la columna como resultado
+                    ]);
+                }
+            }
+        }
+
+        // Unir las colecciones
+        $resultadosCombinados = $resultadosArray->concat($parametrosEstacion)->values();
+
+        // Devolver la combinación de ambos conjuntos de datos
+        return response()->json($resultadosCombinados);
     }
+
+
 
     public function getDataLastDayProcesada(Request $request) 
     {

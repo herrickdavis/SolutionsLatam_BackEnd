@@ -122,16 +122,19 @@ class SetDataController extends Controller
                 );
                 $speach = "Se creo correctamente el límite: ";
             }
-            
+
             foreach($parametros as $parametro) {
+                $limite_inferior = $parametro['limite_inferior'] ?? '';
+                $limite_superior = $parametro['limite_superior'] ?? '';
+
                 $limite_parametros = TelemetriaLimiteParametro::updateOrCreate(
                     [
                         'limite_id' => $limite->id,
                         'parametro_id' => $parametro['id_parametro'],
                     ],
                     [
-                        'limite_inferior' => $parametro['limite_inferior'],
-                        'limite_superior' => $parametro['limite_superior']
+                        'limite_inferior' => $limite_inferior,
+                        'limite_superior' => $limite_superior
                     ]
                 );
             }
