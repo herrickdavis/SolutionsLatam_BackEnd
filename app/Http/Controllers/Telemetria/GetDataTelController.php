@@ -1065,6 +1065,7 @@ class GetDataTelController extends Controller
             ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
             ->leftJoin('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
             ->where('te.nombre_estacion', $nombre_estacion)
+            ->where('tm.nombre_archivo', 'Tabla_Horaria_ECA')
             ->whereBetween('tm.fecha_muestreo', [$fechaInicio, $fechaFin])
             ->orderBy('tm.fecha_muestreo')
             ->get();

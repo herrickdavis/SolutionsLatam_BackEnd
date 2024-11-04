@@ -284,7 +284,6 @@ class CadenaCustodiaExport
             }
             $n++;
         }
-
         #Recorro y reemplazo
         for ($m=0; $m < $cantidad_hojas_muestras + 1; $m++) {
             $hoja = $m;
@@ -312,7 +311,10 @@ class CadenaCustodiaExport
                             }
                         }
                         if ($tag) {
-                            break;
+                            $contador = 0;
+                            if(preg_match('/\[BUCLE\]\[.*?\]/', $cellValue)) {
+                                break;
+                            }
                         }
 
                         if((preg_match($patron, $cellValue)) && (substr($cellValue, -strlen("_LABORATORIO]")) != "_LABORATORIO]") && (substr($cellValue, -strlen("_INSITU]")) != "_INSITU]")) {
