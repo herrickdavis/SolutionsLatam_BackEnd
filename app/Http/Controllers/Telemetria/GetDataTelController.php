@@ -1057,10 +1057,12 @@ class GetDataTelController extends Controller
         $fechaFin = $fechaCarbon->copy()->addDay()->startOfDay(); // 2023-10-12 00:00:00
 
         // Formatear la fecha de muestreo para los parámetros de estación
-        $fechaMuestreo = $fechaCarbon->format('Y-m-d H:i:s');
+        $fechaMuestreo = $fechaInicio->format('Y-m-d H:i:s');
+
+        \Log::info($fechaMuestreo);
 
         $resultados = DB::table('telemetria_resultados as tr')
-            ->select('tm.fecha_muestreo', 'tp.nombre_parametro', 'tr.resultado')
+            ->select('tm.fecha_muestreo', 'tp.nombre_parametro', 'tr.resultado', DB::raw('1 as tipo'))
             ->leftJoin('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
             ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
             ->leftJoin('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
@@ -1095,7 +1097,8 @@ class GetDataTelController extends Controller
                     $parametrosEstacion->push([
                         'fecha_muestreo' => $fechaMuestreo,  // Usar la fecha de búsqueda
                         'nombre_parametro' => $columna,      // El nombre de la columna como nombre del parámetro
-                        'resultado' => $valor                // El valor de la columna como resultado
+                        'resultado' => $valor,                // El valor de la columna como resultado
+                        'tipo' => 2
                     ]);
                 }
             }
