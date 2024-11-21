@@ -210,6 +210,8 @@ class CadenaCustodiaExport
                                             if($valor->{strtolower($texto_nombre_laboratorio)} == $parametros[$this->column_to_number($col)-$this->column_to_number($inicio_parametros_laboratorio)]) {
                                                 $sheet->setCellValue($col . $row, 'X');
                                                 break;
+                                            } else {
+                                                $sheet->setCellValue($col . $row, '---');
                                             }
                                         }
                                     }
@@ -270,6 +272,8 @@ class CadenaCustodiaExport
                                             if($valor->{strtolower($texto_nombre_insitu)} == $parametros[$this->column_to_number($col)-$this->column_to_number($inicio_parametros_in_situ)]) {
                                                 if(($valor->{strtolower($texto)} != "None") && ($valor->{strtolower($texto)} != Null)) {
                                                     $sheet->setCellValue($col . $row, $valor->{strtolower($texto)});
+                                                } else {
+                                                    $sheet->setCellValue($col . $row, '---');
                                                 }
                                             }
                                         }
