@@ -1014,7 +1014,7 @@ class GetDataTelController extends Controller
 
                 // Aplicar filtros de fecha
                 if ($fecha_inicio && $fecha_fin) {
-                    $query->whereBetween('tm.fecha_muestreo', [$fecha_inicio, $fecha_fin]);
+                    $query->whereBetween('tm.fecha_muestreo', [$fecha_inicio." 00:10:00", $fecha_fin]);
                 } else {
                     $query->where('tm.fecha_muestreo', '>', $fecha_limite);
                 }
@@ -1056,10 +1056,7 @@ class GetDataTelController extends Controller
         $fechaInicio = $fechaCarbon->startOfDay()->addMinutes(10); // 2023-10-11 00:10:00
         $fechaFin = $fechaCarbon->copy()->addDay()->startOfDay(); // 2023-10-12 00:00:00
 
-        // Formatear la fecha de muestreo para los parámetros de estación
         $fechaMuestreo = $fechaInicio->format('Y-m-d H:i:s');
-
-        \Log::info($fechaMuestreo);
 
         $resultados = DB::table('telemetria_resultados as tr')
             ->select('tm.fecha_muestreo', 'tp.nombre_parametro', 'tr.resultado', DB::raw('1 as tipo'))

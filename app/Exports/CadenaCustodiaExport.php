@@ -312,9 +312,10 @@ class CadenaCustodiaExport
                         }
                         if ($tag) {
                             $contador = 0;
-                            if(preg_match('/\[BUCLE\]\[.*?\]/', $cellValue)) {
-                                break;
+                            if(preg_match('/\[END\]$/', $cellValue)) {
+                                $tag = false;
                             }
+                            break;
                         }
 
                         if((preg_match($patron, $cellValue)) && (substr($cellValue, -strlen("_LABORATORIO]")) != "_LABORATORIO]") && (substr($cellValue, -strlen("_INSITU]")) != "_INSITU]")) {
