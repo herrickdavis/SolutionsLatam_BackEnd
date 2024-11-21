@@ -211,7 +211,7 @@ class CadenaCustodiaExport
                                                 $sheet->setCellValue($col . $row, 'X');
                                                 break;
                                             } else {
-                                                $sheet->setCellValue($col . $row, '---');
+                                                $sheet->setCellValue($col . $row, '--');
                                             }
                                         }
                                     }
@@ -273,7 +273,7 @@ class CadenaCustodiaExport
                                                 if(($valor->{strtolower($texto)} != "None") && ($valor->{strtolower($texto)} != Null)) {
                                                     $sheet->setCellValue($col . $row, $valor->{strtolower($texto)});
                                                 } else {
-                                                    $sheet->setCellValue($col . $row, '---');
+                                                    $sheet->setCellValue($col . $row, '--');
                                                 }
                                             }
                                         }
