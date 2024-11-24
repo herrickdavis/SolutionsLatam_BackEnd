@@ -68,6 +68,7 @@ use App\Http\Controllers\COC\GetCadenaPlantillasController;
 use App\Http\Controllers\COC\GetArchivoPlantillaController;
 use App\Http\Controllers\COC\GetAllCadenasController;
 use App\Http\Controllers\COC\GetRegionEmpresasController;
+use App\Http\Controllers\COC\SetImagenesFirmasController;
 
 // API CLIENTES
 use App\Http\Controllers\ApiClientes\LoginController;
@@ -248,6 +249,7 @@ Route::post('getDataLastDayProcesada', [GetDataTelController::class,'getDataLast
 Route::post('getAllStationExternal', [GetDataTelController::class,'getAllStationExternal']);
 Route::post('getDataResult', [GetDataTelController::class,'getDataResult']);
 Route::post('getIDInformacion', [GetDataTelController::class,'getIDInformacion']);
+Route::apiResource('setFirmas', SetImagenesFirmasController::class);
 
 //######## API PARA CLIENTE
 //Route::middleware('auth:sanctum')->apiResource('Muestras', MuestrasController::class);
