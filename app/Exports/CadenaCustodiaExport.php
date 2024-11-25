@@ -6,6 +6,9 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
+use PhpOffice\PhpSpreadsheet\Shared\Drawing as SharedDrawing;
+use PhpOffice\PhpSpreadsheet\Style\Font;
 
 class CadenaCustodiaExport
 {    
@@ -288,6 +291,8 @@ class CadenaCustodiaExport
             }
             $n++;
         }
+
+        $defaultFont = $spreadsheet->getDefaultStyle()->getFont();
         #Recorro y reemplazo
         for ($m=0; $m < $cantidad_hojas_muestras + 1; $m++) {
             $hoja = $m;
@@ -303,47 +308,101 @@ class CadenaCustodiaExport
                     while ($this->column_to_number($col) <= $this->column_to_number($highestColumn)) {
                         $cellValue = $sheet->getCell($col . $row)->getValue();
                         $patron = "/\[([^\]]*)\]/";
-                        if (preg_match('/\[BUCLE\]\[.*?\]/', $cellValue)) {
-                            if(count($array_muestras) >= $contador + 1) {
-                                if($tag_inicio) {
-                                    $contador++;
+                        if (preg_match('/^\[FIRMA\]\[([^\]]+)\]$/', $cellValue, $matches)) {
+                            $valor = $array_muestras[$contador][$matches[1]];
+                            // Buscar la imagen en la carpeta storage/app/img_firmas/
+                            $imagePath = storage_path('app/img_firmas/');
+                            $files = glob($imagePath . $valor . '.*'); // Busca cualquier extensión
+                            if (count($files) > 0) {
+                                $file = $files[0];
+                                // Insertar la imagen en la celda
+                                $drawing = new Drawing();
+                                $drawing->setName('Firma');
+                                $drawing->setDescription('Firma');
+                                $drawing->setPath($file);
+        
+                                // Obtener las dimensiones de la celda
+                                $columnWidth = $sheet->getColumnDimension($col)->getWidth();
+                                $rowHeight = $sheet->getRowDimension($row)->getRowHeight();
+        
+                                // Manejar alturas de fila automáticas
+                                if ($rowHeight == -1) {
+                                    $rowHeight = $sheet->getDefaultRowDimension()->getRowHeight();
                                 }
-                                $tag_inicio = true;
+        
+                                // Convertir las dimensiones a píxeles
+                                $columnWidthPx = SharedDrawing::cellDimensionToPixels($columnWidth, $defaultFont);
+                                $rowHeightPx = SharedDrawing::pointsToPixels($rowHeight);
+        
+                                // Validar dimensiones
+                                if ($columnWidthPx <= 0) {
+                                    $columnWidthPx = 64; // Valor predeterminado en píxeles
+                                }
+                                if ($rowHeightPx <= 0) {
+                                    $rowHeightPx = 20; // Valor predeterminado en píxeles
+                                }
+        
+                                // Ajustar el tamaño de la imagen al tamaño de la celda
+                                $drawing->setResizeProportional(false);
+                                $drawing->setWidth($columnWidthPx);
+                                $drawing->setHeight($rowHeightPx);
+        
+                                // Posicionar la imagen en la celda sin offset
+                                $drawing->setCoordinates($col . $row);
+                                $drawing->setOffsetX(0);
+                                $drawing->setOffsetY(0);
+        
+                                $drawing->setWorksheet($sheet);
+        
+                                // Limpiar el valor de la celda
+                                $sheet->setCellValue($col . $row, '');
+                            } else {
+                                // Si no se encuentra la imagen, dejar la celda en blanco o manejar según sea necesario
+                                $sheet->setCellValue($col . $row, '');
+                            }        
+                        } else {
+                            if (preg_match('/\[BUCLE\]\[.*?\]/', $cellValue)) {
+                                if(count($array_muestras) >= $contador + 1) {
+                                    if($tag_inicio) {
+                                        $contador++;
+                                    }
+                                    $tag_inicio = true;
+                                }
+                                if(count($array_muestras) <= $contador) {
+                                    $tag = true;
+                                }
                             }
-                            if(count($array_muestras) <= $contador) {
-                                $tag = true;
+                            if ($tag) {
+                                $contador = 0;
+                                if(preg_match('/\[END\]$/', $cellValue)) {
+                                    $tag = false;
+                                }
+                                break;
                             }
-                        }
-                        if ($tag) {
-                            $contador = 0;
-                            if(preg_match('/\[END\]$/', $cellValue)) {
-                                $tag = false;
-                            }
-                            break;
-                        }
 
-                        if((preg_match($patron, $cellValue)) && (substr($cellValue, -strlen("_LABORATORIO]")) != "_LABORATORIO]") && (substr($cellValue, -strlen("_INSITU]")) != "_INSITU]")) {
-                            $cellValue = str_replace("[BUCLE]","",$cellValue);
-                            preg_match_all("/\[([^\]]*)\]/", $cellValue, $matches);
-                            $newCellValue = $cellValue;
-                            if (!empty($matches[1])) {
-                                foreach ($matches[1] as $texto) {
-                                    // Verifica si el texto entre corchetes existe como clave en el array $info
-                                    if (array_key_exists($texto, $array_muestras[$contador])) {
-                                        if (($array_muestras[$contador][$texto] != "None") && ($array_muestras[$contador][$texto] != null)) {
-                                            // Reemplaza cada coincidencia del texto entre corchetes con su valor correspondiente en $info
-                                            $pattern = '/' . preg_quote("[$texto]", '/') . '/';
-                                            $replacement = $array_muestras[$contador][$texto];
-                                            $newCellValue = preg_replace($pattern, $replacement, $newCellValue);
+                            if((preg_match($patron, $cellValue)) && (substr($cellValue, -strlen("_LABORATORIO]")) != "_LABORATORIO]") && (substr($cellValue, -strlen("_INSITU]")) != "_INSITU]")) {
+                                $cellValue = str_replace("[BUCLE]","",$cellValue);
+                                preg_match_all("/\[([^\]]*)\]/", $cellValue, $matches);
+                                $newCellValue = $cellValue;
+                                if (!empty($matches[1])) {
+                                    foreach ($matches[1] as $texto) {
+                                        // Verifica si el texto entre corchetes existe como clave en el array $info
+                                        if (array_key_exists($texto, $array_muestras[$contador])) {
+                                            if (($array_muestras[$contador][$texto] != "None") && ($array_muestras[$contador][$texto] != null)) {
+                                                // Reemplaza cada coincidencia del texto entre corchetes con su valor correspondiente en $info
+                                                $pattern = '/' . preg_quote("[$texto]", '/') . '/';
+                                                $replacement = $array_muestras[$contador][$texto];
+                                                $newCellValue = preg_replace($pattern, $replacement, $newCellValue);
+                                            }
                                         }
                                     }
                                 }
+                            
+                                // Establece el nuevo valor de la celda con todos los reemplazos realizados
+                                $sheet->setCellValue($col . $row, $newCellValue);
                             }
-                        
-                            // Establece el nuevo valor de la celda con todos los reemplazos realizados
-                            $sheet->setCellValue($col . $row, $newCellValue);
+                            $col = $this->sumarLetra($col);
                         }
-                        $col = $this->sumarLetra($col);
                     }
                 }
 
