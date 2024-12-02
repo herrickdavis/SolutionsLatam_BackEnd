@@ -255,6 +255,11 @@ class SetDataController extends Controller
     {
         set_time_limit(2400);
         $resultados = $request->all();
+        $timestamp = now();
+        foreach ($resultados as &$resultado) {
+            $resultado['created_at'] = $timestamp;
+            $resultado['updated_at'] = $timestamp;
+        }
         DB::beginTransaction();
         try {
             DB::table('notificacions')->insert($resultados);
