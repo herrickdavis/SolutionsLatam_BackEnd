@@ -1160,4 +1160,119 @@ class GetDataTelController extends Controller
         }
         return response()->json($criterios_validacion);
     }
+
+    public function getAllData(Request $request)
+    {
+        ini_set('max_execution_time', 300);
+        $parametros = $request->parametros;
+        $fecha_inicio = $request->fecha_inicio;
+        $fecha_fin = $request->fecha_fin;
+        $estaciones = $request->estaciones;
+        $tipo_data = $request->tipo_data;
+        $resultados = DB::table('telemetria_resultados as tr')
+            ->leftJoin('telemetria_muestras as tm', 'tm.id', '=', 'tr.muestra_id')
+            ->leftJoin('telemetria_estacions as te', 'te.id', '=', 'tm.estacion_id')
+            ->leftJoin('telemetria_parametros as tp', 'tp.id', '=', 'tr.parametro_id')
+            ->leftJoin('telemetria_unidads as tu', 'tu.id', '=', 'tr.unidad_id')
+            ->leftJoin('telemetria_estado_resultados as ter', 'ter.id', '=', 'tr.estado_id')
+            ->select(
+                'tm.fecha_muestreo',
+                'tm.nombre_archivo',
+                'te.nombre_estacion',
+                'tp.nombre_parametro',
+                'tr.resultado',
+                'tu.nombre_unidad',
+                'ter.nombre_estado'
+            )
+            ->when($parametros, function ($query) use ($parametros) {
+                $query->whereIn('tr.parametro_id', $parametros);
+            })
+            ->when($estaciones, function ($query) use ($estaciones) {
+                $query->whereIn('te.nombre_estacion', $estaciones);
+            })
+            ->when($fecha_inicio && $fecha_fin, function ($query) use ($fecha_inicio, $fecha_fin) {
+                $query->whereBetween('tm.fecha_muestreo', [$fecha_inicio, $fecha_fin]);
+            })
+            ->when($tipo_data, function ($query) use ($tipo_data) {
+                $query->where('tr.estado_id', $tipo_data);
+            })
+            ->orderBy('tm.fecha_muestreo', 'desc')
+            ->get();
+        
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="resultados_telemetria.csv"',
+        ];
+
+        $columns = [
+            'Fecha Muestreo',
+            'Archivo',
+            'Estacion',
+            'Parametro',
+            'Resultado',
+            'Unidad',
+            'Estado'
+        ];
+
+        $callback = function () use ($resultados, $columns) {
+            $file = fopen('php://output', 'w');
+            fwrite($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fputcsv($file, $columns);
+
+            foreach ($resultados as $row) {
+                fputcsv($file, [
+                    $row->fecha_muestreo,
+                    $row->nombre_archivo,
+                    $row->nombre_estacion,
+                    $row->nombre_parametro,
+                    $row->resultado,
+                    $row->nombre_unidad,
+                    $row->nombre_estado
+                ]);
+            }
+
+            fclose($file);
+        };
+        return response()->stream($callback, 200, $headers);
+    }
+
+    public function getAllMuestras(Request $request)
+    {
+        $estacion_id = $request->estacion_id;
+        $nombre_archivo = $request->nombre_archivo;
+
+        // Obtener datos
+        $resultados = DB::table('telemetria_muestras as tm')
+            ->select('tm.id')
+            ->where('tm.estacion_id', $estacion_id)
+            ->where('tm.nombre_archivo', $nombre_archivo)
+            ->get();
+
+        $resultArray = json_decode(json_encode($resultados), true);
+        \Log::info(count($resultArray));
+        // Limpiar el nombre del archivo (sin espacios, tildes, etc.)
+        $archivoSeguro = preg_replace('/[^a-zA-Z0-9_-]/', '_', $nombre_archivo);
+        $csvFilename = "estacion{$estacion_id}_{$archivoSeguro}.csv";
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$csvFilename\"",
+        ];
+
+        $callback = function () use ($resultArray) {
+            $handle = fopen('php://output', 'w');
+
+            if (count($resultArray) > 0) {
+                fputcsv($handle, array_keys($resultArray[0]));
+            }
+
+            foreach ($resultArray as $row) {
+                fputcsv($handle, $row);
+            }
+
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

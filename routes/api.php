@@ -249,6 +249,8 @@ Route::post('getDataLastDayProcesada', [GetDataTelController::class,'getDataLast
 Route::post('getAllStationExternal', [GetDataTelController::class,'getAllStationExternal']);
 Route::post('getDataResult', [GetDataTelController::class,'getDataResult']);
 Route::post('getIDInformacion', [GetDataTelController::class,'getIDInformacion']);
+Route::post('getAllData', [GetDataTelController::class,'getAllData']);
+Route::post('getAllMuestras', [GetDataTelController::class,'getAllMuestras']);
 Route::apiResource('setFirmas', SetImagenesFirmasController::class);
 
 //######## API PARA CLIENTE
