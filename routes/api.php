@@ -243,6 +243,7 @@ Route::post('setParametroTelemetria', [SetDataController::class,'setParametroTel
 Route::post('getResultadoPorProcesar', [GetDataTelController::class,'getResultadoPorProcesar']);
 Route::post('setDataProcesadaTelemetria', [SetDataController::class,'setDataProcesadaTelemetria']);
 Route::post('setClearDataProcesada', [SetDataController::class,'setClearDataProcesada']);
+Route::post('limpiarMuestrasIncompletas', [GetDataTelController::class,'limpiarMuestrasIncompletas']);
 Route::post('getResultadoPorProcesarRuido', [GetDataTelController::class,'getResultadoPorProcesarRuido']);
 Route::post('getDataLastDay', [GetDataTelController::class,'getDataLastDay']);
 Route::post('getDataLastDayProcesada', [GetDataTelController::class,'getDataLastDayProcesada']);

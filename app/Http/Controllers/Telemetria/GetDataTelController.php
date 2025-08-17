@@ -924,7 +924,7 @@ class GetDataTelController extends Controller
                     ->orWhereNull('estado_id');
             })
             ->where('tm.fecha_muestreo', '>', $fecha_limite)
-            ->paginate($numero_registros);
+            ->simplePaginate($numero_registros);
 
         } catch (Throwable $e) {
             report($e);

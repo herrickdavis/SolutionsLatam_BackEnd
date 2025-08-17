@@ -18,6 +18,7 @@ use App\Models\TelemetriaResultado;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Throwable;
+use Illuminate\Validation\ValidationException;
 
 class SetDataController extends Controller
 {
@@ -350,5 +351,62 @@ class SetDataController extends Controller
         // $cadena = str_replace(" ", "-", $cadena);
         
         return $cadena;
+    }
+
+    public function limpiarMuestrasIncompletas(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'estacion_id' => 'required|integer',
+                'nombre_archivo' => 'required|string',
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json(['error' => 'Datos de entrada inválidos.', 'messages' => $e->errors()], 422);
+        }
+
+        $estacionId = $validated['estacion_id'];
+        $nombreArchivo = $validated['nombre_archivo'];
+
+        try {
+            $baseQuery = DB::table('telemetria_muestras as tm')
+                ->leftJoin('telemetria_resultados as tr', 'tm.id', '=', 'tr.muestra_id')
+                ->where('tm.estacion_id', $estacionId)
+                ->where('tm.nombre_archivo', $nombreArchivo)
+                ->groupBy('tm.id');
+
+            $maxConteo = DB::table(DB::raw("({$baseQuery->toSql()}) as sub"))
+                ->mergeBindings($baseQuery)
+                ->select(DB::raw('MAX(sub.conteo) as max_conteo'))
+                ->value('max_conteo');
+            
+            if (is_null($maxConteo)) {
+                return response()->json(['message' => 'No se encontraron muestras para analizar.']);
+            }
+            
+            $deletedCount = DB::transaction(function () use ($baseQuery, $maxConteo) {
+                $idsParaBorrar = $baseQuery
+                    ->select('tm.id') // Solo necesitamos el ID
+                    ->having(DB::raw('COUNT(tr.parametro_id)'), '!=', $maxConteo)
+                    ->pluck('id');
+
+                if ($idsParaBorrar->isEmpty()) {
+                    return 0;
+                }
+                
+                DB::table('telemetria_resultados')->whereIn('muestra_id', $idsParaBorrar)->delete();
+                DB::table('telemetria_muestras')->whereIn('id', $idsParaBorrar)->delete();
+
+                return $idsParaBorrar->count();
+            });
+
+            if ($deletedCount > 0) {
+                return response()->json(['message' => "Limpieza completada. Se eliminaron {$deletedCount} muestras."]);
+            }
+
+            return response()->json(['message' => 'No se encontraron muestras incompletas para eliminar.']);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Ocurrió un error en el servidor al procesar la solicitud.'], 500);
+        }
     }
 }
