@@ -326,9 +326,27 @@ class SetDataController extends Controller
     function setDataProcesadaTelemetria(Request $request) {
         set_time_limit(2400);
         $resultados = $request->all();
+        if (empty($resultados)) {
+            return response()->json(['message' => 'No hay datos para procesar'], 400);
+        }
+        $now = now();
+        $resultadosConTimestamps = array_map(function ($registro) use ($now) {
+            $registro['created_at'] = $now;
+            $registro['updated_at'] = $now;
+            return $registro;
+        }, $resultados);
         DB::beginTransaction();
         try {
-            DB::table('telemetria_data_procesadas')->insertOrIgnore($resultados);
+            $columnasUnicas = ['estacion_id', 'fecha_muestreo', 'parametro_id'];
+            $columnasAActualizar = array_diff(
+                array_keys($resultadosConTimestamps[0]), 
+                $columnasUnicas
+            );            
+            DB::table('telemetria_data_procesadas')->upsert(
+                $resultadosConTimestamps,
+                $columnasUnicas,
+                array_values($columnasAActualizar)
+            );
 
             DB::commit();
 
@@ -355,6 +373,7 @@ class SetDataController extends Controller
 
     public function limpiarMuestrasIncompletas(Request $request)
     {
+        set_time_limit(310);
         try {
             $validated = $request->validate([
                 'estacion_id' => 'required|integer',
@@ -368,25 +387,28 @@ class SetDataController extends Controller
         $nombreArchivo = $validated['nombre_archivo'];
 
         try {
+            // ### LA CORRECCIÓN ESTÁ AQUÍ ###
+            // Especificamos explícitamente las columnas para evitar el "id" duplicado
+            // y para generar la columna "conteo" que necesitamos después.
             $baseQuery = DB::table('telemetria_muestras as tm')
                 ->leftJoin('telemetria_resultados as tr', 'tm.id', '=', 'tr.muestra_id')
+                ->select('tm.id', DB::raw('COUNT(tr.parametro_id) as conteo')) // <-- ESTA LÍNEA RESUELVE EL ERROR
                 ->where('tm.estacion_id', $estacionId)
                 ->where('tm.nombre_archivo', $nombreArchivo)
                 ->groupBy('tm.id');
 
+            // Esta parte ahora funciona porque la subconsulta es válida.
             $maxConteo = DB::table(DB::raw("({$baseQuery->toSql()}) as sub"))
                 ->mergeBindings($baseQuery)
-                ->select(DB::raw('MAX(sub.conteo) as max_conteo'))
-                ->value('max_conteo');
-            
+                ->max('conteo');
+
             if (is_null($maxConteo)) {
                 return response()->json(['message' => 'No se encontraron muestras para analizar.']);
             }
             
             $deletedCount = DB::transaction(function () use ($baseQuery, $maxConteo) {
                 $idsParaBorrar = $baseQuery
-                    ->select('tm.id') // Solo necesitamos el ID
-                    ->having(DB::raw('COUNT(tr.parametro_id)'), '!=', $maxConteo)
+                    ->having('conteo', '!=', $maxConteo)
                     ->pluck('id');
 
                 if ($idsParaBorrar->isEmpty()) {
@@ -406,7 +428,12 @@ class SetDataController extends Controller
             return response()->json(['message' => 'No se encontraron muestras incompletas para eliminar.']);
 
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Ocurrió un error en el servidor al procesar la solicitud.'], 500);
+            return response()->json([
+                'error' => 'Error explícito detectado.',
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ], 500);
         }
     }
 }
