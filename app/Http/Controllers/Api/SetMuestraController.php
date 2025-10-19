@@ -577,7 +577,7 @@ class SetMuestraController extends Controller
                 } else {
                     foreach ($parametros as $parametro) {
                         if ($id_limite != null and $historico != 'S') {//solo ingreso limites cuando trae limite
-                            if ($parametro['limite_maximo'] != null && $parametro['limite_minimo'] != null) {
+                            if ($parametro['limite_maximo'] != null || $parametro['limite_minimo'] != null) {
                                 $sql_limite_parametros = LimiteParametros::updateOrCreate(
                                     ['id_limite' => $id_limite, 'id_parametro' => $parametro['id_parametro']],
                                     [
@@ -619,10 +619,7 @@ class SetMuestraController extends Controller
                             ]
                         );
                     }
-                }
-                
-                //guardare solo los que provoquen algun error para ahorrar espacio DB
-                //$log_upload->save();
+                }                                            
             } catch (Throwable $e) {
                 report($e);
                 $hubo_error = true;

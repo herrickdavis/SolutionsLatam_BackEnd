@@ -277,8 +277,14 @@ class GetDataHistoricaController extends Controller
                                 ->where('l.id', '=', $id_limite)
                                 ->whereIn('lp.id_parametro', $parametro['id'])
                                 ->first();
-                    $limite_maximo = $sql_limite->maximo;
-                    $limite_minimo = $sql_limite->minimo;
+                    
+                    // Inicializar límites como nulos por defecto
+                    $limite_maximo = null;
+                    $limite_minimo = null;
+                    if ($sql_limite) { // Verificar si la consulta devolvió un resultado
+                        $limite_maximo = $sql_limite->maximo;
+                        $limite_minimo = $sql_limite->minimo;
+                    }
 
                     $dato_limites_minimo = [];
                     foreach ($label as $fecha) {
