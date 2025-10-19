@@ -26,6 +26,8 @@ class NotificacionesController extends Controller
      */
     public function store(Request $request)
     {
+        $user = $request->user();
+        $id_empresas = getIdEmpresas($user);
         $validated = $request->validate([
             'per_page' => 'nullable|integer|min:1',
             'leido' => 'nullable|string|in:N,S',
@@ -38,8 +40,8 @@ class NotificacionesController extends Controller
         $nivel_notificacion = $validated['nivel_notificacion'] ?? -1;
         $fecha = $validated['fecha'] ?? -1;
 
-        $total = Notificacion::count();
-        $total_sin_leer = Notificacion::where('leido', 'N')->count();
+        $total = Notificacion::whereIn('empresa_id', $id_empresas)->count();
+        $total_sin_leer = Notificacion::where('leido', 'N')->whereIn('empresa_id', $id_empresas)->count();
 
         $notificaciones = Notificacion::query()
             ->when($leido === 'N', function ($query) use ($leido) {
@@ -51,6 +53,7 @@ class NotificacionesController extends Controller
             ->when($fecha != -1, function ($query) use ($fecha) {
                 return $query->whereDate('created_at', $fecha);
             })
+            ->whereIn('empresa_id', $id_empresas)
             ->paginate($per_page);
 
         $response = $notificaciones->toArray();

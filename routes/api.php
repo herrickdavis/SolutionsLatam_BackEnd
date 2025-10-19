@@ -208,7 +208,7 @@ Route::middleware('auth:sanctum')->post('/DataExternaCrearProyecto', [MuestraExt
 //Route::middleware('auth:sanctum')->apiResource('GetCambiarPassword', GetCambiarPasswordController::class);
 
 //Notificaciones
-Route::apiResource('Notificaciones', NotificacionesController::class);
+Route::middleware('auth:sanctum')->apiResource('Notificaciones', NotificacionesController::class);
 
 //Telemetria
 Route::apiResource('SetDataTelemetria', SetDataController::class);
