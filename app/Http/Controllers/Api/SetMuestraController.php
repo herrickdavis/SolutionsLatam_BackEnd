@@ -581,8 +581,8 @@ class SetMuestraController extends Controller
                                 $sql_limite_parametros = LimiteParametros::updateOrCreate(
                                     ['id_limite' => $id_limite, 'id_parametro' => $parametro['id_parametro']],
                                     [
-                                        'maximo' => $parametro['limite_maximo'],
-                                        'minimo' => $parametro['limite_minimo'],
+                                        'maximo' => $parametro['limite_maximo'] ?? null,
+                                        'minimo' => $parametro['limite_minimo'] ?? null,
                                     ]
                                 );
                             }
